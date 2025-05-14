@@ -1,10 +1,16 @@
 import React from 'react';
 
 // A simple SVG component that renders the CFT logo (red fish)
-const CFTLogo: React.FC<{ width?: string, height?: string, className?: string }> = ({ 
+const CFTLogo: React.FC<{ 
+  width?: string, 
+  height?: string, 
+  className?: string,
+  style?: React.CSSProperties 
+}> = ({ 
   width = '100px', 
   height = 'auto',
-  className
+  className,
+  style
 }) => {
   return (
     <svg 
@@ -13,6 +19,7 @@ const CFTLogo: React.FC<{ width?: string, height?: string, className?: string }>
       viewBox="0 0 300 200" 
       xmlns="http://www.w3.org/2000/svg"
       className={className}
+      style={style}
     >
       {/* Red fish logo */}
       <g transform="translate(80, 70)">
