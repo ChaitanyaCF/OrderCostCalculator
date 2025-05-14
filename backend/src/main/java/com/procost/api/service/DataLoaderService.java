@@ -1,162 +1,154 @@
 package com.procost.api.service;
 
-import com.opencsv.CSVReader;
-import com.opencsv.CSVReaderBuilder;
-import com.opencsv.exceptions.CsvException;
-import com.procost.api.model.PackageEntry;
-import com.procost.api.model.RateEntry;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
+import com.procost.api.model.PackagingRate;
+import com.procost.api.model.RateTable;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.PostConstruct;
-import java.io.FileReader;
+import java.io.BufferedReader;
 import java.io.IOException;
-import java.nio.file.Paths;
+import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 @Service
 public class DataLoaderService {
-    private static final Logger logger = LoggerFactory.getLogger(DataLoaderService.class);
     
-    @Value("${app.data.rate-table}")
-    private String rateTablePath;
-    
-    @Value("${app.data.pack-table}")
-    private String packTablePath;
-    
-    private List<RateEntry> rateEntries = new ArrayList<>();
-    private List<PackageEntry> packageEntries = new ArrayList<>();
+    private final List<RateTable> rateTableData = new ArrayList<>();
+    private final List<PackagingRate> packagingRateData = new ArrayList<>();
     
     @PostConstruct
     public void init() {
+        loadRateTableData();
+        loadPackagingRateData();
+    }
+    
+    private void loadRateTableData() {
         try {
-            loadRateData();
-            loadPackageData();
-        } catch (Exception e) {
-            logger.error("Error loading CSV data: {}", e.getMessage(), e);
+            ClassPathResource resource = new ClassPathResource("data/rate_table.csv");
+            BufferedReader reader = new BufferedReader(new InputStreamReader(resource.getInputStream()));
+            
+            // Skip header
+            String line = reader.readLine();
+            
+            while ((line = reader.readLine()) != null) {
+                String[] values = line.split(",");
+                if (values.length >= 4) {
+                    RateTable rate = new RateTable();
+                    rate.setProduct(values[0].trim());
+                    rate.setTrimType(values[1].trim());
+                    rate.setRmSpec(values[2].trim());
+                    rate.setRate(Double.parseDouble(values[3].trim()));
+                    rateTableData.add(rate);
+                }
+            }
+            
+            reader.close();
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to load rate table data", e);
         }
     }
     
-    private void loadRateData() throws IOException, CsvException {
-        logger.info("Loading rate data from {}", rateTablePath);
-        
-        try (CSVReader reader = new CSVReaderBuilder(new FileReader(Paths.get(rateTablePath).toFile()))
-                .withSkipLines(1) // Skip header
-                .build()) {
+    private void loadPackagingRateData() {
+        try {
+            ClassPathResource resource = new ClassPathResource("data/pack_table.csv");
+            BufferedReader reader = new BufferedReader(new InputStreamReader(resource.getInputStream()));
             
-            List<String[]> rows = reader.readAll();
+            // Skip header
+            String line = reader.readLine();
             
-            rateEntries = rows.stream()
-                    .map(row -> new RateEntry(
-                            row[0], // product
-                            row[1], // trim_type
-                            row[2], // rm_spec
-                            Double.parseDouble(row[3]) // rate_per_kg
-                    ))
-                    .collect(Collectors.toList());
+            while ((line = reader.readLine()) != null) {
+                String[] values = line.split(",");
+                if (values.length >= 5) {
+                    PackagingRate packagingRate = new PackagingRate();
+                    packagingRate.setProdType(values[0].trim());
+                    packagingRate.setProduct(values[1].trim());
+                    packagingRate.setPackType(values[2].trim());
+                    packagingRate.setTransportMode(values[3].trim());
+                    packagingRate.setRate(Double.parseDouble(values[4].trim()));
+                    packagingRateData.add(packagingRate);
+                }
+            }
             
-            logger.info("Loaded {} rate entries", rateEntries.size());
+            reader.close();
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to load packaging rate data", e);
         }
     }
     
-    private void loadPackageData() throws IOException, CsvException {
-        logger.info("Loading package data from {}", packTablePath);
-        
-        try (CSVReader reader = new CSVReaderBuilder(new FileReader(Paths.get(packTablePath).toFile()))
-                .withSkipLines(1) // Skip header
-                .build()) {
-            
-            List<String[]> rows = reader.readAll();
-            
-            packageEntries = rows.stream()
-                    .map(row -> new PackageEntry(
-                            row[0], // prod_type
-                            row[1], // product
-                            row[2], // box_qty
-                            row[3], // pack
-                            row[4], // transport_mode
-                            Double.parseDouble(row[5]) // packaging_rate
-                    ))
-                    .collect(Collectors.toList());
-            
-            logger.info("Loaded {} package entries", packageEntries.size());
-        }
+    public Double calculateFilingRate(String product, String trimType, String rmSpec) {
+        return rateTableData.stream()
+                .filter(rate -> rate.getProduct().equalsIgnoreCase(product)
+                        && rate.getTrimType().equalsIgnoreCase(trimType)
+                        && rate.getRmSpec().equalsIgnoreCase(rmSpec))
+                .findFirst()
+                .map(RateTable::getRate)
+                .orElse(null);
+    }
+    
+    public Double calculatePackagingRate(String prodType, String product, String packType, String transportMode) {
+        return packagingRateData.stream()
+                .filter(rate -> rate.getProdType().equalsIgnoreCase(prodType)
+                        && rate.getProduct().equalsIgnoreCase(product)
+                        && rate.getPackType().equalsIgnoreCase(packType)
+                        && rate.getTransportMode().equalsIgnoreCase(transportMode))
+                .findFirst()
+                .map(PackagingRate::getRate)
+                .orElse(null);
     }
     
     public List<String> getProductOptions() {
-        return rateEntries.stream()
-                .map(RateEntry::getProduct)
+        return rateTableData.stream()
+                .map(RateTable::getProduct)
                 .distinct()
                 .collect(Collectors.toList());
     }
     
     public List<String> getTrimTypes(String product) {
-        return rateEntries.stream()
-                .filter(entry -> entry.getProduct().equals(product))
-                .map(RateEntry::getTrimType)
+        return rateTableData.stream()
+                .filter(rate -> rate.getProduct().equalsIgnoreCase(product))
+                .map(RateTable::getTrimType)
                 .distinct()
                 .collect(Collectors.toList());
     }
     
     public List<String> getRmSpecs() {
-        return rateEntries.stream()
-                .map(RateEntry::getRmSpec)
+        return rateTableData.stream()
+                .map(RateTable::getRmSpec)
                 .distinct()
                 .collect(Collectors.toList());
     }
     
     public List<String> getProdTypes() {
-        return packageEntries.stream()
-                .map(PackageEntry::getProdType)
+        return packagingRateData.stream()
+                .map(PackagingRate::getProdType)
                 .distinct()
                 .collect(Collectors.toList());
     }
     
     public List<String> getPackagingTypes(String product, String prodType) {
-        return packageEntries.stream()
-                .filter(entry -> entry.getProduct().equals(product) && entry.getProdType().equals(prodType))
-                .map(PackageEntry::getPack)
+        return packagingRateData.stream()
+                .filter(rate -> rate.getProduct().equalsIgnoreCase(product)
+                        && rate.getProdType().equalsIgnoreCase(prodType))
+                .map(PackagingRate::getPackType)
                 .distinct()
                 .collect(Collectors.toList());
     }
     
     public List<String> getPackagingSizes(String product, String prodType) {
-        return packageEntries.stream()
-                .filter(entry -> entry.getProduct().equals(product) && entry.getProdType().equals(prodType))
-                .map(PackageEntry::getBoxQty)
-                .distinct()
-                .collect(Collectors.toList());
+        // In this implementation, packaging size is not a separate attribute
+        // We can return the packaging types as sizes for now
+        return getPackagingTypes(product, prodType);
     }
     
     public List<String> getTransportModes() {
-        return packageEntries.stream()
-                .map(PackageEntry::getTransportMode)
+        return packagingRateData.stream()
+                .map(PackagingRate::getTransportMode)
                 .distinct()
                 .collect(Collectors.toList());
-    }
-    
-    public Double calculateFilingRate(String product, String trimType, String rmSpec) {
-        return rateEntries.stream()
-                .filter(entry -> entry.getProduct().equals(product) &&
-                        entry.getTrimType().equals(trimType) &&
-                        entry.getRmSpec().equals(rmSpec))
-                .map(RateEntry::getRatePerKg)
-                .findFirst()
-                .orElse(null);
-    }
-    
-    public Double calculatePackagingRate(String prodType, String product, String packType, String transportMode) {
-        return packageEntries.stream()
-                .filter(entry -> entry.getProdType().equals(prodType) &&
-                        entry.getProduct().equals(product) &&
-                        entry.getPack().equals(packType) &&
-                        entry.getTransportMode().equals(transportMode))
-                .map(PackageEntry::getPackagingRate)
-                .findFirst()
-                .orElse(null);
     }
 }

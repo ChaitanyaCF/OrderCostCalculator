@@ -1,0 +1,29 @@
+prod_type,product,pack_type,transport_mode,packaging_rate
+Fresh,Fillet,EPS 10 kg,regular,2
+Fresh,Fillet,EPS 20 kg,regular,2.5
+Fresh,Fillet,EPS AIR 15 kg,AIR,4
+Fresh,Fillet,EPS AIR 20 kg,AIR,4
+Fresh,Fillet,Foil 2-3,regular,4
+Fresh,Fillet,Foil 3-4,regular,3.5
+Fresh,Fillet,Foil 4-5,regular,3.25
+Fresh,Fillet,Foil 5-6,regular,3
+Fresh,Portions,IVP,regular,3.5
+Fresh,Portions,Chain Pack 2R,regular,4.25
+Fresh,Portions,Chain Pack 4R,regular,4.25
+Fresh,Portions,Chain Pack 5R,regular,4.25
+Fresh,Portions,Chain Pack 3R,regular,5.5
+Frozen,Fillet,Foil 2-3,regular,4
+Frozen,Fillet,Foil 3-4,regular,3.5
+Frozen,Fillet,Foil 4-5,regular,3.25
+Frozen,Fillet,Foil 5-6,regular,3
+Frozen,Portions,IVP,regular,3.5
+Frozen,Portions,Chain Pack 2R,regular,4.25
+Frozen,Portions,Chain Pack 4R,regular,4.25
+Frozen,Portions,Chain Pack 5R,regular,4.25
+Frozen,Portions,Chain Pack 3R,regular,5.5
+Frozen,Fillet,Solid Box 20 kg,regular,1.75
+Frozen,Fillet,Corrugated Box 10 kg,regular,2
+Frozen,Fillet,Corrugated Box 5 kg,regular,2.25
+Frozen,Portions,Solid Box 20 kg,regular,1.75
+Frozen,Portions,Corrugated Box 10 kg,regular,2
+Frozen,Portions,Corrugated Box 5 kg,regular,2.25

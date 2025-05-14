@@ -2,12 +2,32 @@ modules = ["python-3.11", "nodejs-20", "java-17"]
 
 [nix]
 channel = "stable-24_05"
+packages = ["maven"]
 
 [deployment]
 deploymentTarget = "autoscale"
 run = ["streamlit", "run", "app.py", "--server.port", "5000"]
 
 [workflows]
+runButton = "Project"
+
+[[workflows.workflow]]
+name = "Project"
+mode = "parallel"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Backend Server"
+
+[[workflows.workflow]]
+name = "Backend Server"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "cd backend && mvn spring-boot:run"
+waitForPort = 8080
 
 [[ports]]
 localPort = 5000
