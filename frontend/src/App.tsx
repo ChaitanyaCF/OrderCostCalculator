@@ -63,7 +63,7 @@ function App() {
   return (
     <div style={styles.container}>
       <header style={styles.header}>
-        <img src="/images/CFT Logo variations-01.png" alt="CFT Logo" style={styles.logo} />
+        <img src="/cft-logo.png" alt="CFT Logo" style={styles.logo} />
         <h1 style={styles.title}>ProCost Order Inquiry System</h1>
         <p style={styles.subtitle}>Calculate costs based on product and processing specifications</p>
       </header>
