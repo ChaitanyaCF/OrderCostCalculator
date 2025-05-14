@@ -61,15 +61,20 @@ function App() {
   return (
     <div style={styles.container}>
       <header style={styles.header}>
-        <img src="/cft-logo.svg" alt="CFT Logo" style={styles.logo} />
+        {/* This will use the CFT logo image file once you place it in the /images directory */}
+        <div style={{ ...styles.logo, backgroundColor: colors.primary, display: 'flex', justifyContent: 'center', alignItems: 'center', borderRadius: '4px', color: 'white', padding: '10px', marginBottom: '20px' }}>
+          <span>CFT Logo Placeholder</span>
+        </div>
+        
         <h1 style={styles.title}>ProCost Order Inquiry System</h1>
         <p style={styles.subtitle}>Calculate costs based on product and processing specifications</p>
       </header>
       
       <div style={styles.content}>
         <h2>Welcome to the Order Inquiry System</h2>
-        <p>If you can see this message with the CFT logo, the application is working correctly.</p>
+        <p>If you can see this message, the application is working correctly.</p>
         <p>The system allows you to calculate costs for processing based on your specific requirements.</p>
+        <p><strong>Note:</strong> Please add the CFT logo image file to the <code>/images</code> directory.</p>
         <button style={styles.button}>Get Started</button>
       </div>
     </div>
