@@ -5,9 +5,8 @@ import App from './App';
 import reportWebVitals from './reportWebVitals';
 import axios from 'axios';
 
-// Configure axios base URL and CORS settings
-axios.defaults.baseURL = 'http://localhost:8080/api';
-axios.defaults.headers.common['Access-Control-Allow-Origin'] = '*';
+// Configure axios base URL
+axios.defaults.baseURL = '/api';
 axios.defaults.withCredentials = false;
 
 const root = ReactDOM.createRoot(
