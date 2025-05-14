@@ -1,27 +1,36 @@
-import React, { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
-import { useAuth } from '../../context/AuthContext';
+import React, { useState, useEffect } from 'react';
+import { 
+  Typography, 
+  Paper, 
+  Table, 
+  TableBody, 
+  TableCell, 
+  TableContainer, 
+  TableHead, 
+  TableRow,
+  Box,
+  Button
+} from '@mui/material';
+import { useNavigate } from 'react-router-dom';
 import InquiryService from '../../services/InquiryService';
 import { Inquiry } from '../../types/types';
-import './Dashboard.css';
+import { useAuth } from '../../context/AuthContext';
 
 const Dashboard: React.FC = () => {
-  const { user } = useAuth();
   const [inquiries, setInquiries] = useState<Inquiry[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { user } = useAuth();
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchInquiries = async () => {
       try {
-        setLoading(true);
         const data = await InquiryService.getUserInquiries();
         setInquiries(data);
-        setError(null);
-      } catch (err) {
-        console.error('Failed to fetch inquiries:', err);
-        setError('Failed to load your inquiries. Please try again later.');
-      } finally {
+        setLoading(false);
+      } catch (err: any) {
+        setError(err.response?.data?.message || 'Failed to fetch inquiries');
         setLoading(false);
       }
     };
@@ -29,65 +38,70 @@ const Dashboard: React.FC = () => {
     fetchInquiries();
   }, []);
 
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    return new Intl.DateTimeFormat('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    }).format(date);
+  };
+
+  const handleNewInquiry = () => {
+    navigate('/inquiry');
+  };
+
+  if (loading) {
+    return <Typography>Loading your inquiries...</Typography>;
+  }
+
+  if (error) {
+    return <Typography color="error">{error}</Typography>;
+  }
+
   return (
-    <div className="dashboard">
-      <div className="dashboard-header">
-        <h1>Dashboard</h1>
-        <Link to="/inquiry" className="btn btn-primary">
-          New Inquiry
-        </Link>
-      </div>
-
-      <div className="dashboard-welcome">
-        <h2>Welcome, {user?.username}!</h2>
-        <p>
-          View your past inquiries below or create a new inquiry to calculate costs for your order.
-        </p>
-      </div>
-
-      <div className="dashboard-content">
-        <div className="card">
-          <h3>Your Recent Inquiries</h3>
-          
-          {loading && <div className="loading">Loading your inquiries...</div>}
-          
-          {error && <div className="alert alert-danger">{error}</div>}
-          
-          {!loading && !error && inquiries.length === 0 && (
-            <div className="no-inquiries">
-              <p>You haven't created any inquiries yet.</p>
-              <Link to="/inquiry" className="btn btn-primary">Create Your First Inquiry</Link>
-            </div>
-          )}
-          
-          {!loading && !error && inquiries.length > 0 && (
-            <div className="inquiry-list">
-              <table>
-                <thead>
-                  <tr>
-                    <th>Date</th>
-                    <th>Product</th>
-                    <th>Trim Type</th>
-                    <th>RM Spec</th>
-                    <th>Total Charges</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {inquiries.map((inquiry) => (
-                    <tr key={inquiry.id}>
-                      <td>{new Date(inquiry.createdAt).toLocaleDateString()}</td>
-                      <td>{inquiry.product}</td>
-                      <td>{inquiry.trimType}</td>
-                      <td>{inquiry.rmSpec}</td>
-                      <td>${inquiry.totalCharges.toFixed(2)}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </div>
-      </div>
+    <div className="dashboard-container">
+      <Box sx={{ mb: 4 }}>
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+          <Typography variant="h4" component="h1">
+            Your Inquiries
+          </Typography>
+          <Button variant="contained" onClick={handleNewInquiry}>
+            New Inquiry
+          </Button>
+        </Box>
+        
+        {inquiries.length === 0 ? (
+          <Typography>You haven't created any inquiries yet.</Typography>
+        ) : (
+          <TableContainer component={Paper}>
+            <Table>
+              <TableHead>
+                <TableRow>
+                  <TableCell>Date</TableCell>
+                  <TableCell>Product</TableCell>
+                  <TableCell>Trim Type</TableCell>
+                  <TableCell>RM Spec</TableCell>
+                  <TableCell>Total Charges</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {inquiries.map((inquiry) => (
+                  <TableRow key={inquiry.id}>
+                    <TableCell>{formatDate(inquiry.createdAt)}</TableCell>
+                    <TableCell>{inquiry.product}</TableCell>
+                    <TableCell>{inquiry.trimType}</TableCell>
+                    <TableCell>{inquiry.rmSpec}</TableCell>
+                    <TableCell>${inquiry.totalCharges.toFixed(2)}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </TableContainer>
+        )}
+      </Box>
     </div>
   );
 };

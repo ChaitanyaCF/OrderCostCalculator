@@ -1,121 +1,112 @@
 import React, { useState, FormEvent } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import { TextField, Button, Typography, Paper, Container, Box, Alert } from '@mui/material';
 
 const Register: React.FC = () => {
   const [username, setUsername] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [email, setEmail] = useState('');
-  const [message, setMessage] = useState('');
-  const [success, setSuccess] = useState(false);
-  
+  const [passwordError, setPasswordError] = useState('');
   const { register, error, clearError } = useAuth();
   const navigate = useNavigate();
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
+    clearError();
     
-    if (!username || !password || !confirmPassword) {
-      setMessage('Please fill in all required fields');
-      return;
-    }
-
     if (password !== confirmPassword) {
-      setMessage('Passwords do not match');
+      setPasswordError('Passwords do not match');
       return;
     }
-
-    try {
-      await register(username, password, email);
-      setSuccess(true);
-      
-      // Redirect to login after a short delay
-      setTimeout(() => {
-        navigate('/login');
-      }, 2000);
-    } catch (err) {
-      // Error is handled in the auth context
-      console.error('Registration error:', err);
-    }
+    
+    setPasswordError('');
+    await register(username, password, email);
+    navigate('/');
   };
 
   return (
-    <div className="card">
-      <h2>Register for ProCost</h2>
-      
-      {message && <div className="alert alert-danger">{message}</div>}
-      {error && <div className="alert alert-danger">{error}</div>}
-      {success && <div className="alert alert-success">Registration successful! Redirecting to login...</div>}
-      
-      <form onSubmit={handleSubmit}>
-        <div className="form-group">
-          <label htmlFor="username">Username*</label>
-          <input
-            type="text"
+    <Container maxWidth="sm">
+      <Paper elevation={3} sx={{ mt: 4, p: 4 }}>
+        <Typography variant="h4" component="h1" gutterBottom>
+          Register
+        </Typography>
+        
+        {error && (
+          <Alert severity="error" sx={{ mb: 2 }} onClose={clearError}>
+            {error}
+          </Alert>
+        )}
+        
+        {passwordError && (
+          <Alert severity="error" sx={{ mb: 2 }} onClose={() => setPasswordError('')}>
+            {passwordError}
+          </Alert>
+        )}
+        
+        <Box component="form" onSubmit={handleSubmit} noValidate>
+          <TextField
+            margin="normal"
+            required
+            fullWidth
             id="username"
-            className="form-control"
+            label="Username"
+            name="username"
+            autoComplete="username"
+            autoFocus
             value={username}
-            onChange={(e) => {
-              setUsername(e.target.value);
-              clearError();
-              setMessage('');
-            }}
+            onChange={(e) => setUsername(e.target.value)}
           />
-        </div>
-        
-        <div className="form-group">
-          <label htmlFor="password">Password*</label>
-          <input
-            type="password"
-            id="password"
-            className="form-control"
-            value={password}
-            onChange={(e) => {
-              setPassword(e.target.value);
-              clearError();
-              setMessage('');
-            }}
-          />
-        </div>
-        
-        <div className="form-group">
-          <label htmlFor="confirm-password">Confirm Password*</label>
-          <input
-            type="password"
-            id="confirm-password"
-            className="form-control"
-            value={confirmPassword}
-            onChange={(e) => {
-              setConfirmPassword(e.target.value);
-              clearError();
-              setMessage('');
-            }}
-          />
-        </div>
-        
-        <div className="form-group">
-          <label htmlFor="email">Email (optional)</label>
-          <input
-            type="email"
+          <TextField
+            margin="normal"
+            fullWidth
             id="email"
-            className="form-control"
+            label="Email Address"
+            name="email"
+            autoComplete="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
           />
-        </div>
-        
-        <div className="form-group">
-          <button type="submit" className="btn btn-primary" disabled={success}>
+          <TextField
+            margin="normal"
+            required
+            fullWidth
+            name="password"
+            label="Password"
+            type="password"
+            id="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+          />
+          <TextField
+            margin="normal"
+            required
+            fullWidth
+            name="confirmPassword"
+            label="Confirm Password"
+            type="password"
+            id="confirmPassword"
+            value={confirmPassword}
+            onChange={(e) => setConfirmPassword(e.target.value)}
+          />
+          <Button
+            type="submit"
+            fullWidth
+            variant="contained"
+            sx={{ mt: 3, mb: 2 }}
+          >
             Register
-          </button>
-        </div>
-        
-        <div>
-          Already have an account? <Link to="/login">Login here</Link>
-        </div>
-      </form>
-    </div>
+          </Button>
+          <Box textAlign="center">
+            <Typography variant="body2">
+              Already have an account?{' '}
+              <Link to="/">Login</Link>
+            </Typography>
+          </Box>
+        </Box>
+      </Paper>
+    </Container>
   );
 };
 

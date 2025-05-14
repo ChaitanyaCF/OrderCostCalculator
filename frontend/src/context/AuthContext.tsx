@@ -37,14 +37,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    // Check if user is already logged in
-    const storedUser = localStorage.getItem('user');
-    if (storedUser) {
-      try {
-        setUser(JSON.parse(storedUser));
-      } catch (err) {
-        localStorage.removeItem('user');
-      }
+    const currentUser = AuthService.getCurrentUser();
+    if (currentUser) {
+      setUser({
+        id: currentUser.id,
+        username: currentUser.username,
+        isAdmin: currentUser.isAdmin
+      });
     }
     setLoading(false);
   }, []);
@@ -52,17 +51,15 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const login = async (username: string, password: string) => {
     try {
       setLoading(true);
+      const data = await AuthService.login(username, password);
+      setUser({
+        id: data.id,
+        username: data.username,
+        isAdmin: data.isAdmin
+      });
       setError(null);
-      const userData = await AuthService.login(username, password);
-      setUser(userData);
-      localStorage.setItem('user', JSON.stringify(userData));
-    } catch (err) {
-      if (err instanceof Error) {
-        setError(err.message);
-      } else {
-        setError('An unexpected error occurred during login');
-      }
-      throw err;
+    } catch (err: any) {
+      setError(err.response?.data?.message || 'An error occurred during login');
     } finally {
       setLoading(false);
     }
@@ -71,24 +68,18 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const register = async (username: string, password: string, email?: string) => {
     try {
       setLoading(true);
-      setError(null);
       await AuthService.register(username, password, email);
-    } catch (err) {
-      if (err instanceof Error) {
-        setError(err.message);
-      } else {
-        setError('An unexpected error occurred during registration');
-      }
-      throw err;
+      setError(null);
+    } catch (err: any) {
+      setError(err.response?.data?.message || 'An error occurred during registration');
     } finally {
       setLoading(false);
     }
   };
 
   const logout = () => {
+    AuthService.logout();
     setUser(null);
-    localStorage.removeItem('user');
-    localStorage.removeItem('token');
   };
 
   const clearError = () => {

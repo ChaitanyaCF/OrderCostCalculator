@@ -1,48 +1,61 @@
 import React from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { AppBar, Toolbar, Typography, Button, Box } from '@mui/material';
+import { Link as RouterLink } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import './Header.css';
 
 const Header: React.FC = () => {
   const { user, logout } = useAuth();
-  const navigate = useNavigate();
-
-  const handleLogout = () => {
-    logout();
-    navigate('/login');
-  };
 
   return (
-    <header className="header">
-      <div className="container header-container">
-        <div className="logo">
-          <Link to="/">
-            <img src="/logo.svg" alt="ProCost Logo" height="40" />
-            <span>ProCost</span>
-          </Link>
-        </div>
+    <AppBar position="static">
+      <Toolbar>
+        <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
+          ProCost Calculator
+        </Typography>
         
-        <nav className="nav">
-          {user ? (
-            <>
-              <Link to="/dashboard" className="nav-link">Dashboard</Link>
-              <Link to="/inquiry" className="nav-link">New Inquiry</Link>
-              <div className="user-section">
-                <span className="username">Welcome, {user.username}</span>
-                <button onClick={handleLogout} className="btn-logout">
-                  Logout
-                </button>
-              </div>
-            </>
-          ) : (
-            <>
-              <Link to="/login" className="nav-link">Login</Link>
-              <Link to="/register" className="nav-link">Register</Link>
-            </>
-          )}
-        </nav>
-      </div>
-    </header>
+        {user ? (
+          <Box>
+            <Button 
+              color="inherit" 
+              component={RouterLink} 
+              to="/dashboard"
+            >
+              Dashboard
+            </Button>
+            <Button 
+              color="inherit" 
+              component={RouterLink} 
+              to="/inquiry"
+            >
+              New Inquiry
+            </Button>
+            <Button 
+              color="inherit" 
+              onClick={logout}
+            >
+              Logout
+            </Button>
+          </Box>
+        ) : (
+          <Box>
+            <Button 
+              color="inherit" 
+              component={RouterLink} 
+              to="/"
+            >
+              Login
+            </Button>
+            <Button 
+              color="inherit" 
+              component={RouterLink} 
+              to="/register"
+            >
+              Register
+            </Button>
+          </Box>
+        )}
+      </Toolbar>
+    </AppBar>
   );
 };
 

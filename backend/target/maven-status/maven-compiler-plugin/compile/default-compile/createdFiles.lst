@@ -12,6 +12,7 @@ com/procost/api/controller/InquiryController.class
 com/procost/api/model/User.class
 com/procost/api/security/UserDetailsServiceImpl.class
 com/procost/api/repository/UserRepository.class
+com/procost/api/dto/CalculateRatesResponse.class
 com/procost/api/dto/InquiryResponse.class
 com/procost/api/service/InquiryService.class
 com/procost/api/ProCostApplication.class
@@ -20,10 +21,12 @@ com/procost/api/dto/CalculateChargesRequest$OptionsDto.class
 com/procost/api/service/CalculatorService.class
 com/procost/api/controller/AuthController.class
 com/procost/api/dto/RegisterRequest.class
+com/procost/api/security/AuthTokenFilter.class
 com/procost/api/security/UserDetailsImpl.class
 com/procost/api/model/PackageEntry.class
 com/procost/api/security/AuthEntryPointJwt.class
 com/procost/api/dto/CalculateChargesRequest.class
+com/procost/api/security/JwtUtils.class
 com/procost/api/model/PackagingRate.class
 com/procost/api/model/RateEntry.class
 com/procost/api/exception/GlobalExceptionHandler.class

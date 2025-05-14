@@ -1,7 +1,5 @@
 import axios from 'axios';
 
-const API_URL = '/api/auth';
-
 interface LoginResponse {
   id: number;
   username: string;
@@ -14,45 +12,41 @@ interface RegisterResponse {
 }
 
 class AuthService {
-  async login(username: string, password: string) {
-    try {
-      const response = await axios.post<LoginResponse>(`${API_URL}/login`, {
-        username,
-        password
-      });
-      
-      if (response.data.token) {
-        localStorage.setItem('token', response.data.token);
-      }
-      
-      return {
-        id: response.data.id,
-        username: response.data.username,
-        isAdmin: response.data.isAdmin
-      };
-    } catch (error) {
-      if (axios.isAxiosError(error) && error.response) {
-        throw new Error(error.response.data.message || 'Login failed');
-      }
-      throw new Error('Network error occurred during login');
+  async login(username: string, password: string): Promise<LoginResponse> {
+    const response = await axios.post('/auth/login', { username, password });
+    if (response.data.token) {
+      localStorage.setItem('user', JSON.stringify(response.data));
     }
+    return response.data;
   }
 
-  async register(username: string, password: string, email?: string) {
-    try {
-      const response = await axios.post<RegisterResponse>(`${API_URL}/register`, {
-        username,
-        password,
-        email
-      });
-      
-      return response.data;
-    } catch (error) {
-      if (axios.isAxiosError(error) && error.response) {
-        throw new Error(error.response.data.message || 'Registration failed');
+  async register(username: string, password: string, email?: string): Promise<RegisterResponse> {
+    const response = await axios.post('/auth/register', { username, password, email });
+    return response.data;
+  }
+
+  logout(): void {
+    localStorage.removeItem('user');
+  }
+
+  getCurrentUser(): any {
+    const userStr = localStorage.getItem('user');
+    if (userStr) {
+      try {
+        return JSON.parse(userStr);
+      } catch (e) {
+        return null;
       }
-      throw new Error('Network error occurred during registration');
     }
+    return null;
+  }
+
+  getAuthHeader(): { Authorization: string } | {} {
+    const user = this.getCurrentUser();
+    if (user && user.token) {
+      return { Authorization: `Bearer ${user.token}` };
+    }
+    return {};
   }
 }
 

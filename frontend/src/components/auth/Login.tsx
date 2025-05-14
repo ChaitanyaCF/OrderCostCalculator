@@ -1,80 +1,80 @@
 import React, { useState, FormEvent } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import { TextField, Button, Typography, Paper, Container, Box, Alert } from '@mui/material';
 
 const Login: React.FC = () => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
-  const [message, setMessage] = useState('');
-  const { login, error, clearError } = useAuth();
+  const { login, error, clearError, user } = useAuth();
   const navigate = useNavigate();
+
+  React.useEffect(() => {
+    if (user) {
+      navigate('/dashboard');
+    }
+  }, [user, navigate]);
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
-    
-    if (!username || !password) {
-      setMessage('Please enter both username and password');
-      return;
-    }
-
-    try {
-      await login(username, password);
-      navigate('/dashboard');
-    } catch (err) {
-      // Error is handled in the auth context
-      console.error('Login error:', err);
-    }
+    await login(username, password);
   };
 
   return (
-    <div className="card">
-      <h2>Login to ProCost</h2>
-      
-      {message && <div className="alert alert-danger">{message}</div>}
-      {error && <div className="alert alert-danger">{error}</div>}
-      
-      <form onSubmit={handleSubmit}>
-        <div className="form-group">
-          <label htmlFor="username">Username</label>
-          <input
-            type="text"
-            id="username"
-            className="form-control"
-            value={username}
-            onChange={(e) => {
-              setUsername(e.target.value);
-              clearError();
-              setMessage('');
-            }}
-          />
-        </div>
+    <Container maxWidth="sm">
+      <Paper elevation={3} sx={{ mt: 4, p: 4 }}>
+        <Typography variant="h4" component="h1" gutterBottom>
+          Login
+        </Typography>
         
-        <div className="form-group">
-          <label htmlFor="password">Password</label>
-          <input
+        {error && (
+          <Alert severity="error" sx={{ mb: 2 }} onClose={clearError}>
+            {error}
+          </Alert>
+        )}
+        
+        <Box component="form" onSubmit={handleSubmit} noValidate>
+          <TextField
+            margin="normal"
+            required
+            fullWidth
+            id="username"
+            label="Username"
+            name="username"
+            autoComplete="username"
+            autoFocus
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
+          />
+          <TextField
+            margin="normal"
+            required
+            fullWidth
+            name="password"
+            label="Password"
             type="password"
             id="password"
-            className="form-control"
+            autoComplete="current-password"
             value={password}
-            onChange={(e) => {
-              setPassword(e.target.value);
-              clearError();
-              setMessage('');
-            }}
+            onChange={(e) => setPassword(e.target.value)}
           />
-        </div>
-        
-        <div className="form-group">
-          <button type="submit" className="btn btn-primary">
-            Login
-          </button>
-        </div>
-        
-        <div>
-          Don't have an account? <Link to="/register">Register here</Link>
-        </div>
-      </form>
-    </div>
+          <Button
+            type="submit"
+            fullWidth
+            variant="contained"
+            sx={{ mt: 3, mb: 2 }}
+          >
+            Sign In
+          </Button>
+          <Box textAlign="center">
+            <Typography variant="body2">
+              Don't have an account?{' '}
+              <Link to="/register">Register</Link>
+            </Typography>
+          </Box>
+        </Box>
+      </Paper>
+    </Container>
   );
 };
 
