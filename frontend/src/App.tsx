@@ -24,8 +24,10 @@ function App() {
       marginBottom: '40px',
     },
     logo: {
-      width: '240px',
+      width: '200px',
+      height: 'auto',
       marginBottom: '20px',
+      objectFit: 'contain' as const,
     },
     title: {
       color: colors.secondary,
@@ -61,11 +63,7 @@ function App() {
   return (
     <div style={styles.container}>
       <header style={styles.header}>
-        {/* This will use the CFT logo image file once you place it in the /images directory */}
-        <div style={{ ...styles.logo, backgroundColor: colors.primary, display: 'flex', justifyContent: 'center', alignItems: 'center', borderRadius: '4px', color: 'white', padding: '10px', marginBottom: '20px' }}>
-          <span>CFT Logo Placeholder</span>
-        </div>
-        
+        <img src="/images/CFT Logo variations-01.png" alt="CFT Logo" style={styles.logo} />
         <h1 style={styles.title}>ProCost Order Inquiry System</h1>
         <p style={styles.subtitle}>Calculate costs based on product and processing specifications</p>
       </header>
@@ -74,7 +72,6 @@ function App() {
         <h2>Welcome to the Order Inquiry System</h2>
         <p>If you can see this message, the application is working correctly.</p>
         <p>The system allows you to calculate costs for processing based on your specific requirements.</p>
-        <p><strong>Note:</strong> Please add the CFT logo image file to the <code>/images</code> directory.</p>
         <button style={styles.button}>Get Started</button>
       </div>
     </div>
