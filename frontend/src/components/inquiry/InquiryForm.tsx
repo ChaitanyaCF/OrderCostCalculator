@@ -14,7 +14,6 @@ import {
   Divider,
   Alert,
   SelectChangeEvent,
-  Container,
   Stack
 } from '@mui/material';
 import InquiryService from '../../services/InquiryService';
@@ -188,15 +187,21 @@ const InquiryForm: React.FC = () => {
             options
           );
           
+          // Calculate optional charges sum
+          let optionalSum = 0;
+          if (result.optionalCharges) {
+            for (const key in result.optionalCharges) {
+              optionalSum += Number(result.optionalCharges[key]);
+            }
+          }
+          
           // Create the properly formatted charges result
           const formattedResult: ChargesResult = {
             palletCharge: result.palletCharge,
             terminalCharge: result.terminalCharge,
             optionalCharges: result.optionalCharges || {},
             totalCompulsory: (result.palletCharge + result.terminalCharge),
-            totalOptional: Object.values(result.optionalCharges || {}).length > 0 
-              ? Object.values(result.optionalCharges || {}).reduce((sum: number, val: number) => sum + val, 0)
-              : 0,
+            totalOptional: optionalSum,
             totalCharges: result.totalCharges
           };
           
