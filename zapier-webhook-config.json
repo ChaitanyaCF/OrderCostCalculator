@@ -1,0 +1,42 @@
+{
+  "zapierConfiguration": {
+    "trigger": {
+      "app": "Microsoft Outlook",
+      "event": "New Email",
+      "folder": "Inbox",
+      "filters": {
+        "subjectContains": ["enquiry", "inquiry", "quote", "order", "supply", "fish", "seafood"],
+        "bodyContains": ["salmon", "cod", "haddock", "kg", "ton", "restaurant"]
+      }
+    },
+    "action": {
+      "app": "Webhooks by Zapier",
+      "method": "POST",
+      "url": "YOUR_NGROK_URL/webhooks/zapier/email-received",
+      "headers": {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer "
+      },
+      "payload": {
+        "fromEmail": "{{trigger.fromEmail}}",
+        "toEmail": "{{trigger.toEmail}}",
+        "subject": "{{trigger.subject}}",
+        "emailBody": "{{trigger.bodyPlain}}",
+        "htmlBody": "{{trigger.bodyHtml}}",
+        "receivedAt": "{{trigger.dateReceived}}",
+        "messageId": "{{trigger.messageId}}",
+        "hasAttachments": "{{trigger.hasAttachments}}",
+        "zapierMetadata": {
+          "triggerTime": "{{zap.utc_iso}}",
+          "zapName": "Outlook Email Processing"
+        }
+      }
+    }
+  },
+  "hybridAI": {
+    "enabled": true,
+    "openaiModel": "gpt-4o-mini",
+    "confidenceThreshold": 0.7,
+    "estimatedCostPerEmail": "./setup-outlook-zapier.sh.003-0.005"
+  }
+}

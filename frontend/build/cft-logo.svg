@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg width="350" height="100" viewBox="0 0 350 100" xmlns="http://www.w3.org/2000/svg">
+  <g>
+    <!-- Basic red box with text indicating to replace with actual logo -->
+    <rect x="20" y="30" width="80" height="40" fill="#e43131" rx="5" ry="5"/>
+    <text x="32" y="55" font-family="Arial, sans-serif" font-size="10" fill="#ffffff">CFT Logo</text>
+    
+    <!-- Company name -->
+    <text x="120" y="55" font-family="Arial, sans-serif" font-size="28" font-weight="bold" fill="#000000">CFT ProCost</text>
+    <text x="120" y="80" font-family="Arial, sans-serif" font-size="14" fill="#e43131">Order Inquiry System</text>
+  </g>
+</svg>

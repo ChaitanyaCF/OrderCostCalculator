@@ -1,0 +1,9 @@
+prod_type,product,box_qty,pack,transport_mode,packaging_rate
+Fresh,Fillet,10 kg,EPS,regular,2
+Fresh,Fillet,20 kg,EPS,regular,2.5
+Fresh,Fillet,15 kg AIR,EPS AIR,AIR,4
+Fresh,Fillet,20 kg AIR,EPS AIR,AIR,4
+Fresh,Fillet,VAC,Foil 2-3,regular,4
+Frozen,Fillet,VAC,Foil 3-4,regular,3.5
+Frozen,Fillet,5 kg,Corrugated Box,regular,2.25
+Frozen,Portions,20 kg,Solid Box,regular,1.75 

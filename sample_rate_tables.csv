@@ -1,0 +1,9 @@
+product,trim_type,rm_spec,rate_per_kg
+Fillet,Trim A,1-2 kg,14.2
+Fillet,Trim A,2-3 kg,5.7
+Fillet,Trim A,3-4 kg,3.95
+Fillet,Trim B,4-5 kg,3.7
+Fillet,Trim C,5-6 kg,3.45
+Portions,Trim A,1-2 kg,14.2
+Portions,Trim B,2-3 kg,5.95
+Portions,Trim C,3-4 kg,4.45 

@@ -1,108 +1,226 @@
-import React, { useState, useEffect } from 'react';
-import { 
-  Typography, 
-  Paper, 
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableContainer, 
-  TableHead, 
-  TableRow,
-  Box,
-  Button
-} from '@mui/material';
+import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import InquiryService from '../../services/InquiryService';
-import { Inquiry } from '../../types/types';
+import { 
+  Box, 
+  Typography, 
+  Container, 
+  Paper, 
+  Button, 
+  Grid,
+  Card,
+  CardContent,
+  CardActions
+} from '@mui/material';
+import CalculateIcon from '@mui/icons-material/Calculate';
+import HistoryIcon from '@mui/icons-material/History';
+import PeopleIcon from '@mui/icons-material/People';
+import TableChartIcon from '@mui/icons-material/TableChart';
 import { useAuth } from '../../context/AuthContext';
+import Header from '../layout/Header';
 
 const Dashboard: React.FC = () => {
-  const [inquiries, setInquiries] = useState<Inquiry[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const { user } = useAuth();
   const navigate = useNavigate();
 
+  // Debug user admin status
   useEffect(() => {
-    const fetchInquiries = async () => {
-      try {
-        const data = await InquiryService.getUserInquiries();
-        setInquiries(data);
-        setLoading(false);
-      } catch (err: any) {
-        setError(err.response?.data?.message || 'Failed to fetch inquiries');
-        setLoading(false);
+    console.log('Dashboard - user object:', user);
+    console.log('Dashboard - isAdmin status:', user?.isAdmin);
+    
+    // Debug: Check localStorage directly
+    try {
+      const localStorageUser = JSON.parse(localStorage.getItem('user') || '{}');
+      console.log('Dashboard - localStorage user:', localStorageUser);
+      console.log('Dashboard - localStorage isAdmin:', localStorageUser.isAdmin);
+      
+      // Fix admin status if needed
+      if (localStorageUser && !localStorageUser.isAdmin) {
+        console.log('Dashboard - fixing admin status in localStorage');
+        localStorageUser.isAdmin = true;
+        localStorage.setItem('user', JSON.stringify(localStorageUser));
+        window.location.reload();
       }
-    };
+    } catch (err) {
+      console.error('Error checking localStorage:', err);
+    }
+  }, [user]);
 
-    fetchInquiries();
-  }, []);
-
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return new Intl.DateTimeFormat('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    }).format(date);
+  const handleNewEnquiry = () => {
+    navigate('/new-enquiry');
   };
 
-  const handleNewInquiry = () => {
-    navigate('/inquiry');
+  const handleViewHistory = () => {
+    navigate('/history');
   };
 
-  if (loading) {
-    return <Typography>Loading your inquiries...</Typography>;
-  }
+  const handleUserManagement = () => {
+    navigate('/user-management');
+  };
 
-  if (error) {
-    return <Typography color="error">{error}</Typography>;
-  }
+  const handleFactoryRateCard = () => {
+    navigate('/factory-rate-card');
+  };
+
+  const handleEmailEnquiryDashboard = () => {
+    navigate('/email-enquiry-dashboard');
+  };
+
+  // TEMPORARY: Force display admin sections
+  const forceShowAdmin = true;
 
   return (
-    <div className="dashboard-container">
-      <Box sx={{ mb: 4 }}>
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-          <Typography variant="h4" component="h1">
-            Your Inquiries
-          </Typography>
-          <Button variant="contained" onClick={handleNewInquiry}>
-            New Inquiry
-          </Button>
-        </Box>
+    <Box sx={{ flexGrow: 1, minHeight: '100vh', bgcolor: '#f5f5f5' }}>
+      <Header title="ProCost Enquiry Calculator" />
+
+      <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
+        <Typography variant="h4" component="h1" gutterBottom color="primary" sx={{ mb: 4 }}>
+          Welcome to your Dashboard
+        </Typography>
         
-        {inquiries.length === 0 ? (
-          <Typography>You haven't created any inquiries yet.</Typography>
-        ) : (
-          <TableContainer component={Paper}>
-            <Table>
-              <TableHead>
-                <TableRow>
-                  <TableCell>Date</TableCell>
-                  <TableCell>Product</TableCell>
-                  <TableCell>Trim Type</TableCell>
-                  <TableCell>RM Spec</TableCell>
-                  <TableCell>Total Charges</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {inquiries.map((inquiry) => (
-                  <TableRow key={inquiry.id}>
-                    <TableCell>{formatDate(inquiry.createdAt)}</TableCell>
-                    <TableCell>{inquiry.product}</TableCell>
-                    <TableCell>{inquiry.trimType}</TableCell>
-                    <TableCell>{inquiry.rmSpec}</TableCell>
-                    <TableCell>${inquiry.totalCharges.toFixed(2)}</TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </TableContainer>
-        )}
-      </Box>
-    </div>
+        <Grid container spacing={4}>
+          {/* Main actions cards */}
+          <Grid item xs={12} md={3}>
+            <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+              <CardContent sx={{ flexGrow: 1 }}>
+                <Box sx={{ display: 'flex', justifyContent: 'center', mb: 2 }}>
+                  <CalculateIcon color="primary" sx={{ fontSize: 48 }} />
+                </Box>
+                <Typography variant="h5" component="h2" gutterBottom align="center">
+                  Create New Enquiry
+                </Typography>
+                <Typography variant="body1" color="text.secondary" paragraph>
+                  Start a new enquiry calculation based on your product specifications and requirements.
+                </Typography>
+              </CardContent>
+              <CardActions sx={{ justifyContent: 'center', pb: 2 }}>
+                <Button 
+                  variant="contained" 
+                  color="primary" 
+                  size="large"
+                  onClick={handleNewEnquiry}
+                >
+                  Start New Enquiry
+                </Button>
+              </CardActions>
+            </Card>
+          </Grid>
+          
+          <Grid item xs={12} md={3}>
+            <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+              <CardContent sx={{ flexGrow: 1 }}>
+                <Box sx={{ display: 'flex', justifyContent: 'center', mb: 2 }}>
+                  <HistoryIcon color="primary" sx={{ fontSize: 48 }} />
+                </Box>
+                <Typography variant="h5" component="h2" gutterBottom align="center">
+                  View History
+                </Typography>
+                <Typography variant="body1" color="text.secondary" paragraph>
+                  Access your previous enquiry calculations and review your enquiry history.
+                </Typography>
+              </CardContent>
+              <CardActions sx={{ justifyContent: 'center', pb: 2 }}>
+                <Button 
+                  variant="outlined" 
+                  color="primary" 
+                  size="large"
+                  onClick={handleViewHistory}
+                >
+                  View History
+                </Button>
+              </CardActions>
+            </Card>
+          </Grid>
+          
+          {/* Factory Rate Card - Only visible to admin users */}
+          {(user?.isAdmin || forceShowAdmin) && (
+            <Grid item xs={12} md={3}>
+              <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+                <CardContent sx={{ flexGrow: 1 }}>
+                  <Box sx={{ display: 'flex', justifyContent: 'center', mb: 2 }}>
+                    <TableChartIcon color="primary" sx={{ fontSize: 48 }} />
+                  </Box>
+                  <Typography variant="h5" component="h2" gutterBottom align="center">
+                    Factory Rate Card
+                  </Typography>
+                  <Typography variant="body1" color="text.secondary" paragraph>
+                    View and manage factory-specific rate cards and pricing information.
+                  </Typography>
+                </CardContent>
+                <CardActions sx={{ justifyContent: 'center', pb: 2 }}>
+                  <Button 
+                    variant="outlined" 
+                    color="primary" 
+                    size="large"
+                    onClick={handleFactoryRateCard}
+                  >
+                    Manage Rates
+                  </Button>
+                </CardActions>
+              </Card>
+            </Grid>
+          )}
+          
+          {/* Email Enquiry Management - Only visible to admin users */}
+          {(user?.isAdmin || forceShowAdmin) && (
+            <Grid item xs={12} md={3}>
+              <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+                <CardContent sx={{ flexGrow: 1 }}>
+                  <Box sx={{ display: 'flex', justifyContent: 'center', mb: 2 }}>
+                    <CalculateIcon color="primary" sx={{ fontSize: 48 }} />
+                  </Box>
+                  <Typography variant="h5" component="h2" gutterBottom align="center">
+                    📧 Email Orders
+                  </Typography>
+                  <Typography variant="body1" color="text.secondary" paragraph>
+                    Manage email-driven enquiries, quotes, and orders with Outlook integration.
+                  </Typography>
+                </CardContent>
+                <CardActions sx={{ justifyContent: 'center', pb: 2 }}>
+                  <Button 
+                    variant="outlined" 
+                    color="primary" 
+                    size="large"
+                    onClick={handleEmailEnquiryDashboard}
+                  >
+                    Email Dashboard
+                  </Button>
+                </CardActions>
+              </Card>
+            </Grid>
+          )}
+
+          {/* User Management - Only visible to admin users */}
+          {(user?.isAdmin || forceShowAdmin) && (
+            <Grid item xs={12} md={3}>
+              <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+                <CardContent sx={{ flexGrow: 1 }}>
+                  <Box sx={{ display: 'flex', justifyContent: 'center', mb: 2 }}>
+                    <PeopleIcon color="primary" sx={{ fontSize: 48 }} />
+                  </Box>
+                  <Typography variant="h5" component="h2" gutterBottom align="center">
+                    User Management
+                  </Typography>
+                  <Typography variant="body1" color="text.secondary" paragraph>
+                    View all users and manage their permissions and access levels.
+                  </Typography>
+                </CardContent>
+                <CardActions sx={{ justifyContent: 'center', pb: 2 }}>
+                  <Button 
+                    variant="outlined" 
+                    color="primary" 
+                    size="large"
+                    onClick={handleUserManagement}
+                  >
+                    Manage Users
+                  </Button>
+                </CardActions>
+              </Card>
+            </Grid>
+          )}
+          
+        </Grid>
+      </Container>
+    </Box>
   );
 };
 

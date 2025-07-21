@@ -11,8 +11,6 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 @Service
@@ -42,7 +40,7 @@ public class DataLoaderService {
                     rate.setProduct(values[0].trim());
                     rate.setTrimType(values[1].trim());
                     rate.setRmSpec(values[2].trim());
-                    rate.setRate(Double.parseDouble(values[3].trim()));
+                    rate.setRatePerKg(Double.parseDouble(values[3].trim()));
                     rateTableData.add(rate);
                 }
             }
@@ -67,9 +65,14 @@ public class DataLoaderService {
                     PackagingRate packagingRate = new PackagingRate();
                     packagingRate.setProdType(values[0].trim());
                     packagingRate.setProduct(values[1].trim());
-                    packagingRate.setPackType(values[2].trim());
+                    
+                    // The pack_type in the CSV is what we need to use for both boxQty and pack
+                    String packType = values[2].trim();
+                    packagingRate.setBoxQty(packType);
+                    packagingRate.setPack(packType);
+                    
                     packagingRate.setTransportMode(values[3].trim());
-                    packagingRate.setRate(Double.parseDouble(values[4].trim()));
+                    packagingRate.setPackagingRate(Double.parseDouble(values[4].trim()));
                     packagingRateData.add(packagingRate);
                 }
             }
@@ -86,7 +89,7 @@ public class DataLoaderService {
                         && rate.getTrimType().equalsIgnoreCase(trimType)
                         && rate.getRmSpec().equalsIgnoreCase(rmSpec))
                 .findFirst()
-                .map(RateTable::getRate)
+                .map(RateTable::getRatePerKg)
                 .orElse(null);
     }
     
@@ -94,10 +97,10 @@ public class DataLoaderService {
         return packagingRateData.stream()
                 .filter(rate -> rate.getProdType().equalsIgnoreCase(prodType)
                         && rate.getProduct().equalsIgnoreCase(product)
-                        && rate.getPackType().equalsIgnoreCase(packType)
+                        && rate.getPack().equalsIgnoreCase(packType)
                         && rate.getTransportMode().equalsIgnoreCase(transportMode))
                 .findFirst()
-                .map(PackagingRate::getRate)
+                .map(PackagingRate::getPackagingRate)
                 .orElse(null);
     }
     
@@ -134,15 +137,18 @@ public class DataLoaderService {
         return packagingRateData.stream()
                 .filter(rate -> rate.getProduct().equalsIgnoreCase(product)
                         && rate.getProdType().equalsIgnoreCase(prodType))
-                .map(PackagingRate::getPackType)
+                .map(PackagingRate::getPack)
                 .distinct()
                 .collect(Collectors.toList());
     }
     
     public List<String> getPackagingSizes(String product, String prodType) {
-        // In this implementation, packaging size is not a separate attribute
-        // We can return the packaging types as sizes for now
-        return getPackagingTypes(product, prodType);
+        return packagingRateData.stream()
+                .filter(rate -> rate.getProduct().equalsIgnoreCase(product)
+                        && rate.getProdType().equalsIgnoreCase(prodType))
+                .map(PackagingRate::getBoxQty)
+                .distinct()
+                .collect(Collectors.toList());
     }
     
     public List<String> getTransportModes() {

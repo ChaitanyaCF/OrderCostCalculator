@@ -25,5 +25,8 @@
     "react-scripts": "^5.0.1",
     "typescript": "^4.9.5",
     "web-vitals": "^5.0.1"
+  },
+  "devDependencies": {
+    "csv-loader": "^3.0.5"
   }
 }

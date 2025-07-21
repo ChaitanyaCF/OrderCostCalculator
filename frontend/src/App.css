@@ -1,3 +1,77 @@
+@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap');
+
+body {
+  margin: 0;
+  padding: 0;
+  font-family: 'Roboto', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  min-height: 100vh;
+  background-color: #f5f5f5;
+}
+
+/* Animation for the logo on the left side */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Animation for features list */
+@keyframes fadeInLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* Apply animations to elements */
+.logo-animation {
+  animation: fadeInUp 0.8s ease forwards;
+}
+
+.feature-animation {
+  animation: fadeInLeft 0.8s ease forwards;
+  animation-delay: 0.3s;
+  opacity: 0;
+  animation-fill-mode: forwards;
+}
+
+/* Responsive adjustments */
+@media (max-width: 960px) {
+  .auth-paper {
+    margin-top: 0;
+    border-radius: 0;
+  }
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #e43131;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #b80000;
+}
+
 .App {
   text-align: center;
 }
@@ -35,4 +109,25 @@
   to {
     transform: rotate(360deg);
   }
+}
+
+/* Logo styling */
+.logo-container {
+  background-color: white;
+  padding: 1rem;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  display: inline-flex;
+  margin-bottom: 2rem;
+}
+
+.header-logo {
+  background-color: white;
+  padding: 0.5rem;
+  border-radius: 4px;
+  display: inline-flex;
+}
+
+.logo-animation {
+  animation: fadeInUp 0.8s ease forwards;
 }

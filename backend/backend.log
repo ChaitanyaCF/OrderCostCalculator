@@ -1,0 +1,240 @@
+
+  .   ____          _            __ _ _
+ /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+ \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+  '  |____| .__|_| |_|_| |_\__, | / / / /
+ =========|_|==============|___/=/_/_/_/
+ :: Spring Boot ::               (v2.7.12)
+
+2025-07-21 13:09:33.507  INFO 4788 --- [           main] com.procost.api.ProCostApplication       : Starting ProCostApplication v0.0.1-SNAPSHOT using Java 11.0.16 on Chaitanyas-MacBook-Pro.local with PID 4788 (/Users/chaitanyavallabhaneni/Downloads/OrderCostCalculator/backend/target/procost-api-0.0.1-SNAPSHOT.jar started by chaitanyavallabhaneni in /Users/chaitanyavallabhaneni/Downloads/OrderCostCalculator/backend)
+2025-07-21 13:09:33.508 DEBUG 4788 --- [           main] com.procost.api.ProCostApplication       : Running with Spring Boot v2.7.12, Spring v5.3.27
+2025-07-21 13:09:33.508  INFO 4788 --- [           main] com.procost.api.ProCostApplication       : No active profile set, falling back to 1 default profile: "default"
+2025-07-21 13:09:33.983  INFO 4788 --- [           main] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2025-07-21 13:09:34.108  INFO 4788 --- [           main] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 119 ms. Found 6 JPA repository interfaces.
+2025-07-21 13:09:34.526  INFO 4788 --- [           main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat initialized with port(s): 8082 (http)
+2025-07-21 13:09:34.533  INFO 4788 --- [           main] o.apache.catalina.core.StandardService   : Starting service [Tomcat]
+2025-07-21 13:09:34.533  INFO 4788 --- [           main] org.apache.catalina.core.StandardEngine  : Starting Servlet engine: [Apache Tomcat/9.0.75]
+2025-07-21 13:09:34.581  INFO 4788 --- [           main] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring embedded WebApplicationContext
+2025-07-21 13:09:34.581  INFO 4788 --- [           main] w.s.c.ServletWebServerApplicationContext : Root WebApplicationContext: initialization completed in 1038 ms
+2025-07-21 13:09:34.604  INFO 4788 --- [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Starting...
+2025-07-21 13:09:38.180  INFO 4788 --- [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Start completed.
+2025-07-21 13:09:38.187  INFO 4788 --- [           main] o.s.b.a.h2.H2ConsoleAutoConfiguration    : H2 console available at '/h2-console'. Database available at 'jdbc:h2:file:./data/procostdb_new'
+2025-07-21 13:09:38.267  INFO 4788 --- [           main] o.hibernate.jpa.internal.util.LogHelper  : HHH000204: Processing PersistenceUnitInfo [name: default]
+2025-07-21 13:09:38.303  INFO 4788 --- [           main] org.hibernate.Version                    : HHH000412: Hibernate ORM core version 5.6.15.Final
+2025-07-21 13:09:38.394  INFO 4788 --- [           main] o.hibernate.annotations.common.Version   : HCANN000001: Hibernate Commons Annotations {5.1.2.Final}
+2025-07-21 13:09:38.456  INFO 4788 --- [           main] org.hibernate.dialect.Dialect            : HHH000400: Using dialect: org.hibernate.dialect.H2Dialect
+Hibernate: alter table users drop constraint if exists UKr43af9ap4edm43mmtq01oddj6
+Hibernate: alter table users add constraint UKr43af9ap4edm43mmtq01oddj6 unique (username)
+Hibernate: alter table users drop constraint if exists UK6dotkott2kjsp8vw4d0m25fb7
+Hibernate: alter table users add constraint UK6dotkott2kjsp8vw4d0m25fb7 unique (email)
+2025-07-21 13:09:39.001  INFO 4788 --- [           main] o.h.e.t.j.p.i.JtaPlatformInitiator       : HHH000490: Using JtaPlatform implementation: [org.hibernate.engine.transaction.jta.platform.internal.NoJtaPlatform]
+2025-07-21 13:09:39.008  INFO 4788 --- [           main] j.LocalContainerEntityManagerFactoryBean : Initialized JPA EntityManagerFactory for persistence unit 'default'
+2025-07-21 13:09:39.230 DEBUG 4788 --- [           main] c.procost.api.security.AuthTokenFilter   : Filter 'authenticationJwtTokenFilter' configured for use
+2025-07-21 13:09:39.230 DEBUG 4788 --- [           main] com.procost.api.filter.CustomCorsFilter  : Filter 'customCorsFilter' configured for use
+2025-07-21 13:09:39.264 DEBUG 4788 --- [           main] .PrePostAnnotationSecurityMetadataSource : @org.springframework.security.access.prepost.PreAuthorize(value="isAuthenticated()") found on: com.procost.api.controller.InquiryController
+2025-07-21 13:09:39.275 DEBUG 4788 --- [           main] m.DelegatingMethodSecurityMetadataSource : Caching method [CacheKey[com.procost.api.controller.InquiryController; public org.springframework.http.ResponseEntity com.procost.api.controller.InquiryController.getProductOptions()]] with attributes [[authorize: 'isAuthenticated()', filter: 'null', filterTarget: 'null']]
+2025-07-21 13:09:39.283 DEBUG 4788 --- [           main] .PrePostAnnotationSecurityMetadataSource : @org.springframework.security.access.prepost.PreAuthorize(value="isAuthenticated()") found on: com.procost.api.controller.InquiryController
+2025-07-21 13:09:39.283 DEBUG 4788 --- [           main] m.DelegatingMethodSecurityMetadataSource : Caching method [CacheKey[com.procost.api.controller.InquiryController; public org.springframework.http.ResponseEntity com.procost.api.controller.InquiryController.getTrimTypes(java.lang.String)]] with attributes [[authorize: 'isAuthenticated()', filter: 'null', filterTarget: 'null']]
+2025-07-21 13:09:39.283 DEBUG 4788 --- [           main] .PrePostAnnotationSecurityMetadataSource : @org.springframework.security.access.prepost.PreAuthorize(value="isAuthenticated()") found on: com.procost.api.controller.InquiryController
+2025-07-21 13:09:39.283 DEBUG 4788 --- [           main] m.DelegatingMethodSecurityMetadataSource : Caching method [CacheKey[com.procost.api.controller.InquiryController; public org.springframework.http.ResponseEntity com.procost.api.controller.InquiryController.getRmSpecs()]] with attributes [[authorize: 'isAuthenticated()', filter: 'null', filterTarget: 'null']]
+2025-07-21 13:09:39.283 DEBUG 4788 --- [           main] .PrePostAnnotationSecurityMetadataSource : @org.springframework.security.access.prepost.PreAuthorize(value="isAuthenticated()") found on: com.procost.api.controller.InquiryController
+2025-07-21 13:09:39.283 DEBUG 4788 --- [           main] m.DelegatingMethodSecurityMetadataSource : Caching method [CacheKey[com.procost.api.controller.InquiryController; public org.springframework.http.ResponseEntity com.procost.api.controller.InquiryController.getProdTypes()]] with attributes [[authorize: 'isAuthenticated()', filter: 'null', filterTarget: 'null']]
+2025-07-21 13:09:39.283 DEBUG 4788 --- [           main] .PrePostAnnotationSecurityMetadataSource : @org.springframework.security.access.prepost.PreAuthorize(value="isAuthenticated()") found on: com.procost.api.controller.InquiryController
+2025-07-21 13:09:39.283 DEBUG 4788 --- [           main] m.DelegatingMethodSecurityMetadataSource : Caching method [CacheKey[com.procost.api.controller.InquiryController; public org.springframework.http.ResponseEntity com.procost.api.controller.InquiryController.getPackagingTypes(java.lang.String,java.lang.String)]] with attributes [[authorize: 'isAuthenticated()', filter: 'null', filterTarget: 'null']]
+2025-07-21 13:09:39.283 DEBUG 4788 --- [           main] .PrePostAnnotationSecurityMetadataSource : @org.springframework.security.access.prepost.PreAuthorize(value="isAuthenticated()") found on: com.procost.api.controller.InquiryController
+2025-07-21 13:09:39.283 DEBUG 4788 --- [           main] m.DelegatingMethodSecurityMetadataSource : Caching method [CacheKey[com.procost.api.controller.InquiryController; public org.springframework.http.ResponseEntity com.procost.api.controller.InquiryController.getPackagingSizes(java.lang.String,java.lang.String)]] with attributes [[authorize: 'isAuthenticated()', filter: 'null', filterTarget: 'null']]
+2025-07-21 13:09:39.283 DEBUG 4788 --- [           main] .PrePostAnnotationSecurityMetadataSource : @org.springframework.security.access.prepost.PreAuthorize(value="isAuthenticated()") found on: com.procost.api.controller.InquiryController
+2025-07-21 13:09:39.283 DEBUG 4788 --- [           main] m.DelegatingMethodSecurityMetadataSource : Caching method [CacheKey[com.procost.api.controller.InquiryController; public org.springframework.http.ResponseEntity com.procost.api.controller.InquiryController.getTransportModes()]] with attributes [[authorize: 'isAuthenticated()', filter: 'null', filterTarget: 'null']]
+2025-07-21 13:09:39.284 DEBUG 4788 --- [           main] .PrePostAnnotationSecurityMetadataSource : @org.springframework.security.access.prepost.PreAuthorize(value="isAuthenticated()") found on: com.procost.api.controller.InquiryController
+2025-07-21 13:09:39.284 DEBUG 4788 --- [           main] m.DelegatingMethodSecurityMetadataSource : Caching method [CacheKey[com.procost.api.controller.InquiryController; public org.springframework.http.ResponseEntity com.procost.api.controller.InquiryController.calculateRates(java.lang.String,java.lang.String,java.lang.String,java.lang.String,java.lang.String,java.lang.String)]] with attributes [[authorize: 'isAuthenticated()', filter: 'null', filterTarget: 'null']]
+2025-07-21 13:09:39.284 DEBUG 4788 --- [           main] .PrePostAnnotationSecurityMetadataSource : @org.springframework.security.access.prepost.PreAuthorize(value="isAuthenticated()") found on: com.procost.api.controller.InquiryController
+2025-07-21 13:09:39.284 DEBUG 4788 --- [           main] m.DelegatingMethodSecurityMetadataSource : Caching method [CacheKey[com.procost.api.controller.InquiryController; public org.springframework.http.ResponseEntity com.procost.api.controller.InquiryController.calculateCharges(com.procost.api.dto.CalculateChargesRequest)]] with attributes [[authorize: 'isAuthenticated()', filter: 'null', filterTarget: 'null']]
+2025-07-21 13:09:39.284 DEBUG 4788 --- [           main] .PrePostAnnotationSecurityMetadataSource : @org.springframework.security.access.prepost.PreAuthorize(value="isAuthenticated()") found on: com.procost.api.controller.InquiryController
+2025-07-21 13:09:39.284 DEBUG 4788 --- [           main] m.DelegatingMethodSecurityMetadataSource : Caching method [CacheKey[com.procost.api.controller.InquiryController; public org.springframework.http.ResponseEntity com.procost.api.controller.InquiryController.getUserInquiries()]] with attributes [[authorize: 'isAuthenticated()', filter: 'null', filterTarget: 'null']]
+2025-07-21 13:09:39.284 DEBUG 4788 --- [           main] .PrePostAnnotationSecurityMetadataSource : @org.springframework.security.access.prepost.PreAuthorize(value="isAuthenticated()") found on: com.procost.api.controller.InquiryController
+2025-07-21 13:09:39.284 DEBUG 4788 --- [           main] m.DelegatingMethodSecurityMetadataSource : Caching method [CacheKey[com.procost.api.controller.InquiryController; public org.springframework.http.ResponseEntity com.procost.api.controller.InquiryController.saveInquiry(com.procost.api.dto.InquiryRequest)]] with attributes [[authorize: 'isAuthenticated()', filter: 'null', filterTarget: 'null']]
+2025-07-21 13:09:39.458 DEBUG 4788 --- [           main] .PrePostAnnotationSecurityMetadataSource : @org.springframework.security.access.prepost.PreAuthorize(value="hasRole('ADMIN')") found on specific method: public java.util.List com.procost.api.controller.UserController.getAllUsers()
+2025-07-21 13:09:39.459 DEBUG 4788 --- [           main] m.DelegatingMethodSecurityMetadataSource : Caching method [CacheKey[com.procost.api.controller.UserController; public java.util.List com.procost.api.controller.UserController.getAllUsers()]] with attributes [[authorize: 'hasRole('ADMIN')', filter: 'null', filterTarget: 'null']]
+2025-07-21 13:09:39.459 DEBUG 4788 --- [           main] .PrePostAnnotationSecurityMetadataSource : @org.springframework.security.access.prepost.PreAuthorize(value="hasRole('ADMIN')") found on specific method: public org.springframework.http.ResponseEntity com.procost.api.controller.UserController.createUser(com.procost.api.dto.RegisterRequest)
+2025-07-21 13:09:39.459 DEBUG 4788 --- [           main] m.DelegatingMethodSecurityMetadataSource : Caching method [CacheKey[com.procost.api.controller.UserController; public org.springframework.http.ResponseEntity com.procost.api.controller.UserController.createUser(com.procost.api.dto.RegisterRequest)]] with attributes [[authorize: 'hasRole('ADMIN')', filter: 'null', filterTarget: 'null']]
+2025-07-21 13:09:39.459 DEBUG 4788 --- [           main] .PrePostAnnotationSecurityMetadataSource : @org.springframework.security.access.prepost.PreAuthorize(value="hasRole('ADMIN')") found on specific method: public org.springframework.http.ResponseEntity com.procost.api.controller.UserController.toggleAdmin(java.lang.Long,java.util.Map)
+2025-07-21 13:09:39.459 DEBUG 4788 --- [           main] m.DelegatingMethodSecurityMetadataSource : Caching method [CacheKey[com.procost.api.controller.UserController; public org.springframework.http.ResponseEntity com.procost.api.controller.UserController.toggleAdmin(java.lang.Long,java.util.Map)]] with attributes [[authorize: 'hasRole('ADMIN')', filter: 'null', filterTarget: 'null']]
+2025-07-21 13:09:39.459 DEBUG 4788 --- [           main] .PrePostAnnotationSecurityMetadataSource : @org.springframework.security.access.prepost.PreAuthorize(value="hasRole('ADMIN')") found on specific method: public org.springframework.http.ResponseEntity com.procost.api.controller.UserController.deleteUser(java.lang.Long)
+2025-07-21 13:09:39.459 DEBUG 4788 --- [           main] m.DelegatingMethodSecurityMetadataSource : Caching method [CacheKey[com.procost.api.controller.UserController; public org.springframework.http.ResponseEntity com.procost.api.controller.UserController.deleteUser(java.lang.Long)]] with attributes [[authorize: 'hasRole('ADMIN')', filter: 'null', filterTarget: 'null']]
+2025-07-21 13:09:39.525 DEBUG 4788 --- [           main] edFilterInvocationSecurityMetadataSource : Adding web access control expression [permitAll] for Ant [pattern='/api/auth/**']
+2025-07-21 13:09:39.525 DEBUG 4788 --- [           main] edFilterInvocationSecurityMetadataSource : Adding web access control expression [permitAll] for Ant [pattern='/auth/**']
+2025-07-21 13:09:39.526 DEBUG 4788 --- [           main] edFilterInvocationSecurityMetadataSource : Adding web access control expression [permitAll] for Ant [pattern='/api/test/**']
+2025-07-21 13:09:39.526 DEBUG 4788 --- [           main] edFilterInvocationSecurityMetadataSource : Adding web access control expression [permitAll] for Ant [pattern='/h2-console/**']
+2025-07-21 13:09:39.526 DEBUG 4788 --- [           main] edFilterInvocationSecurityMetadataSource : Adding web access control expression [permitAll] for Ant [pattern='/favicon.ico']
+2025-07-21 13:09:39.526 DEBUG 4788 --- [           main] edFilterInvocationSecurityMetadataSource : Adding web access control expression [permitAll] for Ant [pattern='/static/**']
+2025-07-21 13:09:39.526 DEBUG 4788 --- [           main] edFilterInvocationSecurityMetadataSource : Adding web access control expression [permitAll] for Ant [pattern='/*.js']
+2025-07-21 13:09:39.526 DEBUG 4788 --- [           main] edFilterInvocationSecurityMetadataSource : Adding web access control expression [permitAll] for Ant [pattern='/*.css']
+2025-07-21 13:09:39.526 DEBUG 4788 --- [           main] edFilterInvocationSecurityMetadataSource : Adding web access control expression [permitAll] for Ant [pattern='/*.png']
+2025-07-21 13:09:39.526 DEBUG 4788 --- [           main] edFilterInvocationSecurityMetadataSource : Adding web access control expression [permitAll] for Ant [pattern='/*.jpg']
+2025-07-21 13:09:39.526 DEBUG 4788 --- [           main] edFilterInvocationSecurityMetadataSource : Adding web access control expression [permitAll] for Ant [pattern='/*.ico']
+2025-07-21 13:09:39.526 DEBUG 4788 --- [           main] edFilterInvocationSecurityMetadataSource : Adding web access control expression [authenticated] for any request
+2025-07-21 13:09:39.528  INFO 4788 --- [           main] o.s.s.web.DefaultSecurityFilterChain     : Will secure any request with [org.springframework.security.web.session.DisableEncodeUrlFilter@7af0affa, org.springframework.security.web.context.request.async.WebAsyncManagerIntegrationFilter@71560f51, org.springframework.security.web.context.SecurityContextPersistenceFilter@72028a45, org.springframework.security.web.header.HeaderWriterFilter@88b76f2, org.springframework.security.web.authentication.logout.LogoutFilter@5f9f3e58, com.procost.api.filter.CustomCorsFilter@304a9d7b, com.procost.api.security.AuthTokenFilter@4f379769, org.springframework.security.web.savedrequest.RequestCacheAwareFilter@7b222230, org.springframework.security.web.servletapi.SecurityContextHolderAwareRequestFilter@364b1061, org.springframework.security.web.authentication.AnonymousAuthenticationFilter@3e1f1046, org.springframework.security.web.session.SessionManagementFilter@f613067, org.springframework.security.web.access.ExceptionTranslationFilter@6c17c0f8, org.springframework.security.web.access.intercept.FilterSecurityInterceptor@5e7abaf7]
+2025-07-21 13:09:39.586  WARN 4788 --- [           main] JpaBaseConfiguration$JpaWebConfiguration : spring.jpa.open-in-view is enabled by default. Therefore, database queries may be performed during view rendering. Explicitly configure spring.jpa.open-in-view to disable this warning
+2025-07-21 13:09:39.633 DEBUG 4788 --- [           main] s.w.s.m.m.a.RequestMappingHandlerAdapter : ControllerAdvice beans: 0 @ModelAttribute, 0 @InitBinder, 1 RequestBodyAdvice, 1 ResponseBodyAdvice
+2025-07-21 13:09:39.697 DEBUG 4788 --- [           main] s.w.s.m.m.a.RequestMappingHandlerMapping : 51 mappings in 'requestMappingHandlerMapping'
+2025-07-21 13:09:39.711 DEBUG 4788 --- [           main] o.s.w.s.handler.SimpleUrlHandlerMapping  : Patterns [/webjars/**, /**] in 'resourceHandlerMapping'
+2025-07-21 13:09:39.717 DEBUG 4788 --- [           main] .m.m.a.ExceptionHandlerExceptionResolver : ControllerAdvice beans: 1 @ExceptionHandler, 1 ResponseBodyAdvice
+2025-07-21 13:09:39.802  INFO 4788 --- [           main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat started on port(s): 8082 (http) with context path ''
+2025-07-21 13:09:39.808  INFO 4788 --- [           main] com.procost.api.ProCostApplication       : Started ProCostApplication in 6.726 seconds (JVM running for 7.1)
+2025-07-21 13:12:06.135  INFO 4788 --- [nio-8082-exec-1] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring DispatcherServlet 'dispatcherServlet'
+2025-07-21 13:12:06.136  INFO 4788 --- [nio-8082-exec-1] o.s.web.servlet.DispatcherServlet        : Initializing Servlet 'dispatcherServlet'
+2025-07-21 13:12:06.136 DEBUG 4788 --- [nio-8082-exec-1] o.s.web.servlet.DispatcherServlet        : Detected StandardServletMultipartResolver
+2025-07-21 13:12:06.136 DEBUG 4788 --- [nio-8082-exec-1] o.s.web.servlet.DispatcherServlet        : Detected AcceptHeaderLocaleResolver
+2025-07-21 13:12:06.136 DEBUG 4788 --- [nio-8082-exec-1] o.s.web.servlet.DispatcherServlet        : Detected FixedThemeResolver
+2025-07-21 13:12:06.141 DEBUG 4788 --- [nio-8082-exec-1] o.s.web.servlet.DispatcherServlet        : Detected org.springframework.web.servlet.view.DefaultRequestToViewNameTranslator@1efac5b9
+2025-07-21 13:12:06.141 DEBUG 4788 --- [nio-8082-exec-1] o.s.web.servlet.DispatcherServlet        : Detected org.springframework.web.servlet.support.SessionFlashMapManager@5db948c9
+2025-07-21 13:12:06.141 DEBUG 4788 --- [nio-8082-exec-1] o.s.web.servlet.DispatcherServlet        : enableLoggingRequestDetails='false': request parameters and headers will be masked to prevent unsafe logging of potentially sensitive data
+2025-07-21 13:12:06.141  INFO 4788 --- [nio-8082-exec-1] o.s.web.servlet.DispatcherServlet        : Completed initialization in 5 ms
+2025-07-21 13:12:06.151 DEBUG 4788 --- [nio-8082-exec-1] o.s.security.web.FilterChainProxy        : Securing GET /actuator/health
+2025-07-21 13:12:06.153 DEBUG 4788 --- [nio-8082-exec-1] s.s.w.c.SecurityContextPersistenceFilter : Set SecurityContextHolder to empty SecurityContext
+2025-07-21 13:12:06.157 DEBUG 4788 --- [nio-8082-exec-1] o.s.s.w.a.AnonymousAuthenticationFilter  : Set SecurityContextHolder to anonymous SecurityContext
+2025-07-21 13:12:06.163 DEBUG 4788 --- [nio-8082-exec-1] o.s.s.w.a.i.FilterSecurityInterceptor    : Failed to authorize filter invocation [GET /actuator/health] with attributes [authenticated]
+2025-07-21 13:12:06.163 ERROR 4788 --- [nio-8082-exec-1] c.p.api.security.AuthEntryPointJwt       : Unauthorized error: Full authentication is required to access this resource
+2025-07-21 13:12:06.178 DEBUG 4788 --- [nio-8082-exec-1] s.s.w.c.SecurityContextPersistenceFilter : Cleared SecurityContextHolder to complete request
+2025-07-21 13:14:25.153 DEBUG 4788 --- [nio-8082-exec-3] o.s.security.web.FilterChainProxy        : Securing GET /actuator/health
+2025-07-21 13:14:25.154 DEBUG 4788 --- [nio-8082-exec-3] s.s.w.c.SecurityContextPersistenceFilter : Set SecurityContextHolder to empty SecurityContext
+2025-07-21 13:14:25.155 DEBUG 4788 --- [nio-8082-exec-3] o.s.s.w.a.AnonymousAuthenticationFilter  : Set SecurityContextHolder to anonymous SecurityContext
+2025-07-21 13:14:25.157 DEBUG 4788 --- [nio-8082-exec-3] o.s.s.w.a.i.FilterSecurityInterceptor    : Failed to authorize filter invocation [GET /actuator/health] with attributes [authenticated]
+2025-07-21 13:14:25.159 ERROR 4788 --- [nio-8082-exec-3] c.p.api.security.AuthEntryPointJwt       : Unauthorized error: Full authentication is required to access this resource
+2025-07-21 13:14:25.161 DEBUG 4788 --- [nio-8082-exec-3] s.s.w.c.SecurityContextPersistenceFilter : Cleared SecurityContextHolder to complete request
+2025-07-21 13:14:33.356 DEBUG 4788 --- [nio-8082-exec-4] o.s.security.web.FilterChainProxy        : Securing POST /auth/generate-zapier-token
+2025-07-21 13:14:33.356 DEBUG 4788 --- [nio-8082-exec-4] s.s.w.c.SecurityContextPersistenceFilter : Set SecurityContextHolder to empty SecurityContext
+2025-07-21 13:14:33.357 DEBUG 4788 --- [nio-8082-exec-4] o.s.s.w.a.AnonymousAuthenticationFilter  : Set SecurityContextHolder to anonymous SecurityContext
+2025-07-21 13:14:33.362 DEBUG 4788 --- [nio-8082-exec-4] o.s.s.w.a.i.FilterSecurityInterceptor    : Authorized filter invocation [POST /auth/generate-zapier-token] with attributes [permitAll]
+2025-07-21 13:14:33.368 DEBUG 4788 --- [nio-8082-exec-4] o.s.security.web.FilterChainProxy        : Secured POST /auth/generate-zapier-token
+2025-07-21 13:14:33.373 DEBUG 4788 --- [nio-8082-exec-4] o.s.web.servlet.DispatcherServlet        : POST "/auth/generate-zapier-token", parameters={}
+2025-07-21 13:14:33.381 DEBUG 4788 --- [nio-8082-exec-4] s.w.s.m.m.a.RequestMappingHandlerMapping : Mapped to com.procost.api.controller.AuthController#generateZapierToken(Map)
+2025-07-21 13:14:33.434 DEBUG 4788 --- [nio-8082-exec-4] m.m.a.RequestResponseBodyMethodProcessor : Read "application/json;charset=UTF-8" to [{zapierSecret=ZAPIER_SECRET_2024}]
+2025-07-21 13:14:33.438  INFO 4788 --- [nio-8082-exec-4] c.procost.api.controller.AuthController  : Zapier token generation requested
+2025-07-21 13:14:33.439  INFO 4788 --- [nio-8082-exec-4] com.procost.api.service.AuthService      : Generating long-lived JWT token for Zapier integration: zapier-integration
+2025-07-21 13:14:33.527  INFO 4788 --- [nio-8082-exec-4] c.procost.api.controller.AuthController  : Zapier JWT token generated successfully
+2025-07-21 13:14:33.532 DEBUG 4788 --- [nio-8082-exec-4] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Using 'application/json', given [*/*] and supported [application/json, application/*+json, application/json, application/*+json]
+2025-07-21 13:14:33.532 DEBUG 4788 --- [nio-8082-exec-4] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Writing [{usage=Add this token to your Zapier webhook headers as: Authorization Bearer eyJhbGciOiJIUzUxMiJ9.e (truncated)...]
+2025-07-21 13:14:33.537 DEBUG 4788 --- [nio-8082-exec-4] o.s.web.servlet.DispatcherServlet        : Completed 200 OK
+2025-07-21 13:14:33.538 DEBUG 4788 --- [nio-8082-exec-4] s.s.w.c.SecurityContextPersistenceFilter : Cleared SecurityContextHolder to complete request
+2025-07-21 13:15:48.447 DEBUG 4788 --- [nio-8082-exec-7] o.s.security.web.FilterChainProxy        : Securing OPTIONS /api/users
+2025-07-21 13:15:48.447 DEBUG 4788 --- [nio-8082-exec-6] o.s.security.web.FilterChainProxy        : Securing OPTIONS /api/users
+2025-07-21 13:15:48.448 DEBUG 4788 --- [nio-8082-exec-7] s.s.w.c.SecurityContextPersistenceFilter : Set SecurityContextHolder to empty SecurityContext
+2025-07-21 13:15:48.448 DEBUG 4788 --- [nio-8082-exec-6] s.s.w.c.SecurityContextPersistenceFilter : Set SecurityContextHolder to empty SecurityContext
+2025-07-21 13:15:48.449 DEBUG 4788 --- [nio-8082-exec-6] s.s.w.c.SecurityContextPersistenceFilter : Cleared SecurityContextHolder to complete request
+2025-07-21 13:15:48.449 DEBUG 4788 --- [nio-8082-exec-7] s.s.w.c.SecurityContextPersistenceFilter : Cleared SecurityContextHolder to complete request
+2025-07-21 13:15:48.451 DEBUG 4788 --- [nio-8082-exec-8] o.s.security.web.FilterChainProxy        : Securing GET /api/users
+2025-07-21 13:15:48.451 DEBUG 4788 --- [nio-8082-exec-8] s.s.w.c.SecurityContextPersistenceFilter : Set SecurityContextHolder to empty SecurityContext
+2025-07-21 13:15:48.478 ERROR 4788 --- [nio-8082-exec-8] com.procost.api.security.JwtUtils        : JWT token is expired: JWT expired at 2025-07-19T11:29:52Z. Current time: 2025-07-21T13:15:48Z, a difference of 179156478 milliseconds.  Allowed clock skew: 0 milliseconds.
+2025-07-21 13:15:48.478 DEBUG 4788 --- [nio-8082-exec-8] o.s.s.w.a.AnonymousAuthenticationFilter  : Set SecurityContextHolder to anonymous SecurityContext
+2025-07-21 13:15:48.480 DEBUG 4788 --- [nio-8082-exec-8] o.s.s.w.a.i.FilterSecurityInterceptor    : Failed to authorize filter invocation [GET /api/users] with attributes [authenticated]
+2025-07-21 13:15:48.480 ERROR 4788 --- [nio-8082-exec-8] c.p.api.security.AuthEntryPointJwt       : Unauthorized error: Full authentication is required to access this resource
+2025-07-21 13:15:48.481 DEBUG 4788 --- [nio-8082-exec-8] s.s.w.c.SecurityContextPersistenceFilter : Cleared SecurityContextHolder to complete request
+2025-07-21 13:15:48.486 DEBUG 4788 --- [nio-8082-exec-9] o.s.security.web.FilterChainProxy        : Securing GET /api/users
+2025-07-21 13:15:48.487 DEBUG 4788 --- [nio-8082-exec-9] s.s.w.c.SecurityContextPersistenceFilter : Set SecurityContextHolder to empty SecurityContext
+2025-07-21 13:15:48.490 ERROR 4788 --- [nio-8082-exec-9] com.procost.api.security.JwtUtils        : JWT token is expired: JWT expired at 2025-07-19T11:29:52Z. Current time: 2025-07-21T13:15:48Z, a difference of 179156489 milliseconds.  Allowed clock skew: 0 milliseconds.
+2025-07-21 13:15:48.491 DEBUG 4788 --- [nio-8082-exec-9] o.s.s.w.a.AnonymousAuthenticationFilter  : Set SecurityContextHolder to anonymous SecurityContext
+2025-07-21 13:15:48.491 DEBUG 4788 --- [nio-8082-exec-9] o.s.s.w.a.i.FilterSecurityInterceptor    : Failed to authorize filter invocation [GET /api/users] with attributes [authenticated]
+2025-07-21 13:15:48.492 ERROR 4788 --- [nio-8082-exec-9] c.p.api.security.AuthEntryPointJwt       : Unauthorized error: Full authentication is required to access this resource
+2025-07-21 13:15:48.493 DEBUG 4788 --- [nio-8082-exec-9] s.s.w.c.SecurityContextPersistenceFilter : Cleared SecurityContextHolder to complete request
+2025-07-21 13:15:48.764 DEBUG 4788 --- [io-8082-exec-10] o.s.security.web.FilterChainProxy        : Securing GET /logo192.png
+2025-07-21 13:15:48.764 DEBUG 4788 --- [io-8082-exec-10] s.s.w.c.SecurityContextPersistenceFilter : Set SecurityContextHolder to empty SecurityContext
+2025-07-21 13:15:48.764 DEBUG 4788 --- [io-8082-exec-10] o.s.s.w.a.AnonymousAuthenticationFilter  : Set SecurityContextHolder to anonymous SecurityContext
+2025-07-21 13:15:48.764 DEBUG 4788 --- [io-8082-exec-10] o.s.s.w.a.i.FilterSecurityInterceptor    : Authorized filter invocation [GET /logo192.png] with attributes [permitAll]
+2025-07-21 13:15:48.764 DEBUG 4788 --- [io-8082-exec-10] o.s.security.web.FilterChainProxy        : Secured GET /logo192.png
+2025-07-21 13:15:48.765 DEBUG 4788 --- [io-8082-exec-10] o.s.web.servlet.DispatcherServlet        : GET "/logo192.png", parameters={}
+2025-07-21 13:15:48.769 DEBUG 4788 --- [io-8082-exec-10] o.s.w.s.handler.SimpleUrlHandlerMapping  : Mapped to ResourceHttpRequestHandler [classpath [META-INF/resources/], classpath [resources/], classpath [static/], classpath [public/], ServletContext [/]]
+2025-07-21 13:15:48.772 DEBUG 4788 --- [io-8082-exec-10] o.s.w.s.r.ResourceHttpRequestHandler     : Resource not found
+2025-07-21 13:15:48.772 DEBUG 4788 --- [io-8082-exec-10] o.s.web.servlet.DispatcherServlet        : Completed 404 NOT_FOUND
+2025-07-21 13:15:48.773 DEBUG 4788 --- [io-8082-exec-10] s.s.w.c.SecurityContextPersistenceFilter : Cleared SecurityContextHolder to complete request
+2025-07-21 13:15:48.774 DEBUG 4788 --- [io-8082-exec-10] o.s.security.web.FilterChainProxy        : Securing GET /error
+2025-07-21 13:15:48.774 DEBUG 4788 --- [io-8082-exec-10] s.s.w.c.SecurityContextPersistenceFilter : Set SecurityContextHolder to empty SecurityContext
+2025-07-21 13:15:48.774 DEBUG 4788 --- [io-8082-exec-10] o.s.s.w.a.AnonymousAuthenticationFilter  : Set SecurityContextHolder to anonymous SecurityContext
+2025-07-21 13:15:48.774 DEBUG 4788 --- [io-8082-exec-10] o.s.security.web.FilterChainProxy        : Secured GET /error
+2025-07-21 13:15:48.775 DEBUG 4788 --- [io-8082-exec-10] o.s.web.servlet.DispatcherServlet        : "ERROR" dispatch for GET "/error", parameters={}
+2025-07-21 13:15:48.776 DEBUG 4788 --- [io-8082-exec-10] s.w.s.m.m.a.RequestMappingHandlerMapping : Mapped to org.springframework.boot.autoconfigure.web.servlet.error.BasicErrorController#error(HttpServletRequest)
+2025-07-21 13:15:48.780 DEBUG 4788 --- [io-8082-exec-10] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Using 'application/json;q=0.8', given [image/avif, image/webp, image/apng, image/svg+xml, image/*, */*;q=0.8] and supported [application/json, application/*+json, application/json, application/*+json]
+2025-07-21 13:15:48.780 DEBUG 4788 --- [io-8082-exec-10] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Writing [{timestamp=Mon Jul 21 13:15:48 IST 2025, status=404, error=Not Found, path=/logo192.png}]
+2025-07-21 13:15:48.784 DEBUG 4788 --- [io-8082-exec-10] o.s.web.servlet.DispatcherServlet        : Exiting from "ERROR" dispatch, status 404
+2025-07-21 13:15:48.784 DEBUG 4788 --- [io-8082-exec-10] s.s.w.c.SecurityContextPersistenceFilter : Cleared SecurityContextHolder to complete request
+2025-07-21 13:15:53.218 DEBUG 4788 --- [nio-8082-exec-3] o.s.security.web.FilterChainProxy        : Securing OPTIONS /auth/login
+2025-07-21 13:15:53.219 DEBUG 4788 --- [nio-8082-exec-3] s.s.w.c.SecurityContextPersistenceFilter : Set SecurityContextHolder to empty SecurityContext
+2025-07-21 13:15:53.219 DEBUG 4788 --- [nio-8082-exec-3] s.s.w.c.SecurityContextPersistenceFilter : Cleared SecurityContextHolder to complete request
+2025-07-21 13:15:53.222 DEBUG 4788 --- [nio-8082-exec-4] o.s.security.web.FilterChainProxy        : Securing POST /auth/login
+2025-07-21 13:15:53.223 DEBUG 4788 --- [nio-8082-exec-4] s.s.w.c.SecurityContextPersistenceFilter : Set SecurityContextHolder to empty SecurityContext
+2025-07-21 13:15:53.223 DEBUG 4788 --- [nio-8082-exec-4] o.s.s.w.a.AnonymousAuthenticationFilter  : Set SecurityContextHolder to anonymous SecurityContext
+2025-07-21 13:15:53.223 DEBUG 4788 --- [nio-8082-exec-4] o.s.s.w.a.i.FilterSecurityInterceptor    : Authorized filter invocation [POST /auth/login] with attributes [permitAll]
+2025-07-21 13:15:53.223 DEBUG 4788 --- [nio-8082-exec-4] o.s.security.web.FilterChainProxy        : Secured POST /auth/login
+2025-07-21 13:15:53.224 DEBUG 4788 --- [nio-8082-exec-4] o.s.web.servlet.DispatcherServlet        : POST "/auth/login", parameters={}
+2025-07-21 13:15:53.224 DEBUG 4788 --- [nio-8082-exec-4] s.w.s.m.m.a.RequestMappingHandlerMapping : Mapped to com.procost.api.controller.AuthController#authenticateUser(LoginRequest)
+2025-07-21 13:15:53.263 DEBUG 4788 --- [nio-8082-exec-4] m.m.a.RequestResponseBodyMethodProcessor : Read "application/json;charset=UTF-8" to [com.procost.api.dto.LoginRequest@61737865]
+2025-07-21 13:15:53.288  INFO 4788 --- [nio-8082-exec-4] c.procost.api.controller.AuthController  : Login attempt for user: Chaitanya
+2025-07-21 13:15:53.288  INFO 4788 --- [nio-8082-exec-4] com.procost.api.service.AuthService      : Authenticating user: Chaitanya
+Hibernate: select user0_.id as id1_13_, user0_.email as email2_13_, user0_.is_admin as is_admin3_13_, user0_.password as password4_13_, user0_.username as username5_13_ from users user0_ where user0_.username=?
+2025-07-21 13:15:53.498 DEBUG 4788 --- [nio-8082-exec-4] o.s.s.a.dao.DaoAuthenticationProvider    : Authenticated user
+2025-07-21 13:15:53.499  INFO 4788 --- [nio-8082-exec-4] com.procost.api.service.AuthService      : User authenticated: Chaitanya, isAdmin: true
+2025-07-21 13:15:53.499  INFO 4788 --- [nio-8082-exec-4] c.procost.api.controller.AuthController  : Login successful for user: Chaitanya
+2025-07-21 13:15:53.504 DEBUG 4788 --- [nio-8082-exec-4] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Using 'application/json', given [application/json, text/plain, */*] and supported [application/json, application/*+json, application/json, application/*+json]
+2025-07-21 13:15:53.504 DEBUG 4788 --- [nio-8082-exec-4] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Writing [com.procost.api.dto.JwtResponse@4dd062b4]
+2025-07-21 13:15:53.505 DEBUG 4788 --- [nio-8082-exec-4] o.s.web.servlet.DispatcherServlet        : Completed 200 OK
+2025-07-21 13:15:53.506 DEBUG 4788 --- [nio-8082-exec-4] s.s.w.c.SecurityContextPersistenceFilter : Cleared SecurityContextHolder to complete request
+2025-07-21 13:15:54.627 DEBUG 4788 --- [nio-8082-exec-6] o.s.security.web.FilterChainProxy        : Securing OPTIONS /api/users
+2025-07-21 13:15:54.628 DEBUG 4788 --- [nio-8082-exec-5] o.s.security.web.FilterChainProxy        : Securing OPTIONS /api/users
+2025-07-21 13:15:54.628 DEBUG 4788 --- [nio-8082-exec-6] s.s.w.c.SecurityContextPersistenceFilter : Set SecurityContextHolder to empty SecurityContext
+2025-07-21 13:15:54.628 DEBUG 4788 --- [nio-8082-exec-5] s.s.w.c.SecurityContextPersistenceFilter : Set SecurityContextHolder to empty SecurityContext
+2025-07-21 13:15:54.629 DEBUG 4788 --- [nio-8082-exec-6] s.s.w.c.SecurityContextPersistenceFilter : Cleared SecurityContextHolder to complete request
+2025-07-21 13:15:54.629 DEBUG 4788 --- [nio-8082-exec-5] s.s.w.c.SecurityContextPersistenceFilter : Cleared SecurityContextHolder to complete request
+2025-07-21 13:15:54.631 DEBUG 4788 --- [nio-8082-exec-7] o.s.security.web.FilterChainProxy        : Securing GET /api/users
+2025-07-21 13:15:54.631 DEBUG 4788 --- [nio-8082-exec-7] s.s.w.c.SecurityContextPersistenceFilter : Set SecurityContextHolder to empty SecurityContext
+Hibernate: select user0_.id as id1_13_, user0_.email as email2_13_, user0_.is_admin as is_admin3_13_, user0_.password as password4_13_, user0_.username as username5_13_ from users user0_ where user0_.username=?
+2025-07-21 13:15:54.637 DEBUG 4788 --- [nio-8082-exec-7] o.s.s.w.a.i.FilterSecurityInterceptor    : Authorized filter invocation [GET /api/users] with attributes [authenticated]
+2025-07-21 13:15:54.637 DEBUG 4788 --- [nio-8082-exec-7] o.s.security.web.FilterChainProxy        : Secured GET /api/users
+2025-07-21 13:15:54.637 DEBUG 4788 --- [nio-8082-exec-7] o.s.web.servlet.DispatcherServlet        : GET "/api/users", parameters={}
+2025-07-21 13:15:54.638 DEBUG 4788 --- [nio-8082-exec-7] s.w.s.m.m.a.RequestMappingHandlerMapping : Mapped to com.procost.api.controller.UserController#getAllUsers()
+2025-07-21 13:15:54.800 ERROR 4788 --- [nio-8082-exec-7] i.n.r.d.DnsServerAddressStreamProviders  : Unable to load io.netty.resolver.dns.macos.MacOSDnsServerAddressStreamProvider, fallback to system defaults. This may result in incorrect DNS resolutions on MacOS. Check whether you have a dependency on 'io.netty:netty-resolver-dns-native-macos'. Use DEBUG level to see the full stack: java.lang.UnsatisfiedLinkError: failed to load the required native library
+2025-07-21 13:15:54.827 DEBUG 4788 --- [nio-8082-exec-7] o.s.s.a.i.a.MethodSecurityInterceptor    : Authorized ReflectiveMethodInvocation: public java.util.List com.procost.api.controller.UserController.getAllUsers(); target is of class [com.procost.api.controller.UserController] with attributes [[authorize: 'hasRole('ADMIN')', filter: 'null', filterTarget: 'null']]
+2025-07-21 13:15:54.830  INFO 4788 --- [nio-8082-exec-7] c.procost.api.controller.UserController  : User accessing getAllUsers: Chaitanya, Authorities: [ROLE_ADMIN, ROLE_USER]
+2025-07-21 13:15:54.830 DEBUG 4788 --- [nio-8082-exec-7] c.procost.api.controller.UserController  : Is authenticated: true
+2025-07-21 13:15:54.830 DEBUG 4788 --- [nio-8082-exec-7] c.procost.api.controller.UserController  : Principal: com.procost.api.security.UserDetailsImpl@125f406
+2025-07-21 13:15:54.830 DEBUG 4788 --- [nio-8082-exec-7] c.procost.api.controller.UserController  : Credentials: null
+2025-07-21 13:15:54.830  INFO 4788 --- [nio-8082-exec-7] c.procost.api.controller.UserController  : Attempting to retrieve all users from database
+Hibernate: select user0_.id as id1_13_, user0_.email as email2_13_, user0_.is_admin as is_admin3_13_, user0_.password as password4_13_, user0_.username as username5_13_ from users user0_
+2025-07-21 13:15:54.835  INFO 4788 --- [nio-8082-exec-7] c.procost.api.controller.UserController  : User retrieved - ID: 1, Username: testuser, IsAdmin: false
+2025-07-21 13:15:54.835  INFO 4788 --- [nio-8082-exec-7] c.procost.api.controller.UserController  : User retrieved - ID: 2, Username: Chaitanya, IsAdmin: true
+2025-07-21 13:15:54.835  INFO 4788 --- [nio-8082-exec-7] c.procost.api.controller.UserController  : User retrieved - ID: 12, Username: VikashNew, IsAdmin: true
+2025-07-21 13:15:54.835  INFO 4788 --- [nio-8082-exec-7] c.procost.api.controller.UserController  : Successfully retrieved 3 users from database
+2025-07-21 13:15:54.837 DEBUG 4788 --- [nio-8082-exec-7] m.m.a.RequestResponseBodyMethodProcessor : Using 'application/json', given [application/json, text/plain, */*] and supported [application/json, application/*+json, application/json, application/*+json]
+2025-07-21 13:15:54.837 DEBUG 4788 --- [nio-8082-exec-7] m.m.a.RequestResponseBodyMethodProcessor : Writing [[com.procost.api.model.User@1c82cf7e, com.procost.api.model.User@a0b131f, com.procost.api.model.User (truncated)...]
+Hibernate: select inquiries0_.user_id as user_id16_5_1_, inquiries0_.id as id1_5_1_, inquiries0_.id as id1_5_0_, inquiries0_.created_at as created_2_5_0_, inquiries0_.filing_rate as filing_r3_5_0_, inquiries0_.packaging_rate as packagin4_5_0_, inquiries0_.packaging_size as packagin5_5_0_, inquiries0_.packaging_type as packagin6_5_0_, inquiries0_.pallet_charge as pallet_c7_5_0_, inquiries0_.product as product8_5_0_, inquiries0_.product_type as product_9_5_0_, inquiries0_.rm_spec as rm_spec10_5_0_, inquiries0_.terminal_charge as termina11_5_0_, inquiries0_.total_charges as total_c12_5_0_, inquiries0_.transport_mode as transpo13_5_0_, inquiries0_.trim_type as trim_ty14_5_0_, inquiries0_.user_id as user_id16_5_0_, inquiries0_.yield_value as yield_v15_5_0_ from inquiries inquiries0_ where inquiries0_.user_id in (?, ?, ?)
+2025-07-21 13:15:54.842 DEBUG 4788 --- [nio-8082-exec-7] o.s.web.servlet.DispatcherServlet        : Completed 200 OK
+2025-07-21 13:15:54.842 DEBUG 4788 --- [nio-8082-exec-7] s.s.w.c.SecurityContextPersistenceFilter : Cleared SecurityContextHolder to complete request
+2025-07-21 13:15:54.843 DEBUG 4788 --- [nio-8082-exec-8] o.s.security.web.FilterChainProxy        : Securing GET /api/users
+2025-07-21 13:15:54.843 DEBUG 4788 --- [nio-8082-exec-8] s.s.w.c.SecurityContextPersistenceFilter : Set SecurityContextHolder to empty SecurityContext
+Hibernate: select user0_.id as id1_13_, user0_.email as email2_13_, user0_.is_admin as is_admin3_13_, user0_.password as password4_13_, user0_.username as username5_13_ from users user0_ where user0_.username=?
+2025-07-21 13:15:54.845 DEBUG 4788 --- [nio-8082-exec-8] o.s.s.w.a.i.FilterSecurityInterceptor    : Authorized filter invocation [GET /api/users] with attributes [authenticated]
+2025-07-21 13:15:54.845 DEBUG 4788 --- [nio-8082-exec-8] o.s.security.web.FilterChainProxy        : Secured GET /api/users
+2025-07-21 13:15:54.845 DEBUG 4788 --- [nio-8082-exec-8] o.s.web.servlet.DispatcherServlet        : GET "/api/users", parameters={}
+2025-07-21 13:15:54.846 DEBUG 4788 --- [nio-8082-exec-8] s.w.s.m.m.a.RequestMappingHandlerMapping : Mapped to com.procost.api.controller.UserController#getAllUsers()
+2025-07-21 13:15:54.848 DEBUG 4788 --- [nio-8082-exec-8] o.s.s.a.i.a.MethodSecurityInterceptor    : Authorized ReflectiveMethodInvocation: public java.util.List com.procost.api.controller.UserController.getAllUsers(); target is of class [com.procost.api.controller.UserController] with attributes [[authorize: 'hasRole('ADMIN')', filter: 'null', filterTarget: 'null']]
+2025-07-21 13:15:54.848  INFO 4788 --- [nio-8082-exec-8] c.procost.api.controller.UserController  : User accessing getAllUsers: Chaitanya, Authorities: [ROLE_ADMIN, ROLE_USER]
+2025-07-21 13:15:54.848 DEBUG 4788 --- [nio-8082-exec-8] c.procost.api.controller.UserController  : Is authenticated: true
+2025-07-21 13:15:54.848 DEBUG 4788 --- [nio-8082-exec-8] c.procost.api.controller.UserController  : Principal: com.procost.api.security.UserDetailsImpl@6d641cde
+2025-07-21 13:15:54.848 DEBUG 4788 --- [nio-8082-exec-8] c.procost.api.controller.UserController  : Credentials: null
+2025-07-21 13:15:54.848  INFO 4788 --- [nio-8082-exec-8] c.procost.api.controller.UserController  : Attempting to retrieve all users from database
+Hibernate: select user0_.id as id1_13_, user0_.email as email2_13_, user0_.is_admin as is_admin3_13_, user0_.password as password4_13_, user0_.username as username5_13_ from users user0_
+2025-07-21 13:15:54.848  INFO 4788 --- [nio-8082-exec-8] c.procost.api.controller.UserController  : User retrieved - ID: 1, Username: testuser, IsAdmin: false
+2025-07-21 13:15:54.848  INFO 4788 --- [nio-8082-exec-8] c.procost.api.controller.UserController  : User retrieved - ID: 2, Username: Chaitanya, IsAdmin: true
+2025-07-21 13:15:54.848  INFO 4788 --- [nio-8082-exec-8] c.procost.api.controller.UserController  : User retrieved - ID: 12, Username: VikashNew, IsAdmin: true
+2025-07-21 13:15:54.848  INFO 4788 --- [nio-8082-exec-8] c.procost.api.controller.UserController  : Successfully retrieved 3 users from database
+2025-07-21 13:15:54.849 DEBUG 4788 --- [nio-8082-exec-8] m.m.a.RequestResponseBodyMethodProcessor : Using 'application/json', given [application/json, text/plain, */*] and supported [application/json, application/*+json, application/json, application/*+json]
+2025-07-21 13:15:54.849 DEBUG 4788 --- [nio-8082-exec-8] m.m.a.RequestResponseBodyMethodProcessor : Writing [[com.procost.api.model.User@5d85d79b, com.procost.api.model.User@18aac3d2, com.procost.api.model.Use (truncated)...]
+Hibernate: select inquiries0_.user_id as user_id16_5_1_, inquiries0_.id as id1_5_1_, inquiries0_.id as id1_5_0_, inquiries0_.created_at as created_2_5_0_, inquiries0_.filing_rate as filing_r3_5_0_, inquiries0_.packaging_rate as packagin4_5_0_, inquiries0_.packaging_size as packagin5_5_0_, inquiries0_.packaging_type as packagin6_5_0_, inquiries0_.pallet_charge as pallet_c7_5_0_, inquiries0_.product as product8_5_0_, inquiries0_.product_type as product_9_5_0_, inquiries0_.rm_spec as rm_spec10_5_0_, inquiries0_.terminal_charge as termina11_5_0_, inquiries0_.total_charges as total_c12_5_0_, inquiries0_.transport_mode as transpo13_5_0_, inquiries0_.trim_type as trim_ty14_5_0_, inquiries0_.user_id as user_id16_5_0_, inquiries0_.yield_value as yield_v15_5_0_ from inquiries inquiries0_ where inquiries0_.user_id in (?, ?, ?)
+2025-07-21 13:15:54.849 DEBUG 4788 --- [nio-8082-exec-8] o.s.web.servlet.DispatcherServlet        : Completed 200 OK
+2025-07-21 13:15:54.849 DEBUG 4788 --- [nio-8082-exec-8] s.s.w.c.SecurityContextPersistenceFilter : Cleared SecurityContextHolder to complete request
+2025-07-21 13:45:52.153  WARN 4788 --- [l-1 housekeeper] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Thread starvation or clock leap detected (housekeeper delta=18m13s733ms).
+2025-07-21 14:02:33.705  WARN 4788 --- [l-1 housekeeper] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Thread starvation or clock leap detected (housekeeper delta=16m41s554ms).
+2025-07-21 14:22:17.637  WARN 4788 --- [l-1 housekeeper] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Thread starvation or clock leap detected (housekeeper delta=19m43s931ms).
+2025-07-21 14:57:07.285  INFO 4788 --- [ionShutdownHook] j.LocalContainerEntityManagerFactoryBean : Closing JPA EntityManagerFactory for persistence unit 'default'
+2025-07-21 14:57:07.291  INFO 4788 --- [ionShutdownHook] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Shutdown initiated...
+2025-07-21 14:57:07.295  INFO 4788 --- [ionShutdownHook] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Shutdown completed.

@@ -1,0 +1,39 @@
+{
+  "zapier_mcp": {
+    "server_url": "https://mcp.zapier.com/api/mcp/mcp",
+    "api_key": "ZTkwOWQ4ZWYtYTQ0NC00YWUzLTk2NzktYjhkODFlMjQyYmFhOmNmOWY2MDUwLWY2MzYtNDAzNC1hM2ZhLTY5NGVlNmUxNjIwNQ==",
+    "authentication": "Bearer",
+    "timeout": 30000
+  },
+  "backend_integration": {
+    "webhook_base_url": "http://localhost:8082/webhooks/zapier",
+    "endpoints": {
+      "email_received": "/email-received",
+      "send_quote": "/send-quote/{enquiryId}",
+      "quote_accepted": "/quote-accepted",
+      "order_status_update": "/order-status-update"
+    },
+    "auth_token": "will_be_generated"
+  },
+  "email_processing": {
+    "outlook_integration": true,
+    "auto_parse_emails": true,
+    "extract_customer_info": true,
+    "parse_product_requirements": true,
+    "confidence_threshold": 0.8,
+    "fallback_to_manual_review": true
+  },
+  "workflow_config": {
+    "email_filters": {
+      "subject_keywords": ["enquiry", "quote", "order", "price", "product"],
+      "sender_domains": ["*"],
+      "attachment_types": [".pdf", ".csv", ".xlsx", ".doc"]
+    },
+    "processing_rules": {
+      "auto_generate_quotes": true,
+      "send_acknowledgment": true,
+      "create_customer_profile": true,
+      "update_inventory": false
+    }
+  }
+} 
