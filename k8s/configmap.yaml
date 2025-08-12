@@ -1,0 +1,110 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: order-cost-calculator-config
+  namespace: order-cost-calculator
+data:
+  # Backend configuration
+  application.properties: |
+    # Server configuration
+    server.port=8082
+    server.servlet.context-path=/
+
+    # Database configuration with existing data
+    spring.datasource.url=jdbc:h2:file:/app/data/procostdb_new;AUTO_SERVER=TRUE
+    spring.datasource.driver-class-name=org.h2.Driver
+    spring.datasource.username=sa
+    spring.datasource.password=password
+    
+    # SQL initialization - DISABLE for existing database
+    spring.sql.init.mode=never
+    spring.jpa.defer-datasource-initialization=false
+    
+    # H2 Console (disable in production)
+    spring.h2.console.enabled=false
+    spring.h2.console.path=/h2-console
+    
+    # JPA Configuration
+    spring.jpa.database-platform=org.hibernate.dialect.H2Dialect
+    spring.jpa.hibernate.ddl-auto=update
+    spring.jpa.show-sql=false
+    spring.jpa.properties.hibernate.format_sql=false
+    
+    # Security
+    jwt.secret=mySecretKey
+    jwt.expiration=86400000
+    
+    # Logging
+    logging.level.com.procost.api=INFO
+    logging.level.org.springframework.security=INFO
+    logging.file.name=/app/logs/application.log
+    
+    # CORS configuration
+    cors.allowed.origins=http://localhost:3000,http://localhost:3001,https://your-domain.com
+    
+    # AI Configuration
+    ai.hybrid.enabled=true
+    ai.openai.fallback.enabled=true
+    ai.confidence.threshold=0.7
+    
+    # OpenAI Configuration
+    openai.api.key=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
+    openai.model=gpt-4o-mini
+    openai.api.url=https://api.openai.com/v1/chat/completions
+    openai.temperature=0.1
+    
+    # AI Processing Thresholds
+    ai.classification.confidence.threshold=0.8
+    ai.extraction.confidence.threshold=0.7
+    ai.parsing.confidence.threshold=0.6
+    
+    # Fallback Behavior
+    ai.fallback.to.patterns=true
+    ai.retry.on.failure=true
+    ai.max.retries=3
+    
+    # Performance Settings
+    ai.request.timeout=30000
+    ai.batch.processing=false
+    ai.cache.results=true
+    
+    # Cost Control
+    ai.max.daily.requests=2000
+    ai.cost.alert.threshold=10.00
+    ai.usage.tracking.enabled=true
+    
+  # Frontend configuration
+  nginx.conf: |
+    events {
+        worker_connections 1024;
+    }
+    
+    http {
+        include       /etc/nginx/mime.types;
+        default_type  application/octet-stream;
+        
+        server {
+            listen 3000;
+            server_name localhost;
+            root /usr/share/nginx/html;
+            index index.html;
+            
+            location / {
+                try_files $uri $uri/ /index.html;
+            }
+            
+            location /api/ {
+                proxy_pass http://backend-service:8082/api/;
+                proxy_set_header Host $host;
+                proxy_set_header X-Real-IP $remote_addr;
+                proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+                proxy_set_header X-Forwarded-Proto $scheme;
+            }
+            
+            location /health {
+                access_log off;
+                return 200 "healthy\n";
+                add_header Content-Type text/plain;
+            }
+        }
+    }
