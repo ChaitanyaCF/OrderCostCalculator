@@ -17,7 +17,7 @@ services:
       - SPRING_DATASOURCE_URL=jdbc:h2:file:/app/data/procostdb_new
       - SPRING_SQL_INIT_MODE=never
       - SPRING_JPA_DEFER_DATASOURCE_INITIALIZATION=false
-      - OPENAI_API_KEY=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
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-your-openai-api-key-here}
       - OPENAI_MODEL=gpt-4o-mini
       - OPENAI_API_URL=https://api.openai.com/v1/chat/completions
       - OPENAI_TEMPERATURE=0.1
