@@ -16,10 +16,7 @@ public class HybridEmailProcessor {
     private static final Logger logger = LoggerFactory.getLogger(HybridEmailProcessor.class);
     
     @Autowired
-    private AIEmailProcessor patternProcessor;
-    
-    @Autowired
-    private OpenAIEmailProcessor openAIProcessor;
+    private OpenAIService openAIService;
     
     @Autowired
     private CustomerRepository customerRepository;
@@ -34,47 +31,34 @@ public class HybridEmailProcessor {
     private double confidenceThreshold;
     
     /**
-     * Hybrid email classification - tries patterns first, then AI
+     * Email classification - directly uses OpenAI
      */
     public String classifyEmail(String subject, String body) {
-        logger.info("🔄 Starting hybrid email classification for: {}", subject);
+        logger.info("🔄 Starting OpenAI email classification for: {}", subject);
         
-        // Step 1: Try pattern-based classification
-        String patternResult = patternProcessor.classifyEmail(subject, body);
-        double patternConfidence = calculateClassificationConfidence(subject, body, patternResult);
-        
-        logger.info("📊 Pattern classification: {} (confidence: {:.2f})", patternResult, patternConfidence);
-        
-        // Step 2: Decide if we need AI fallback
-        if (shouldUseAIFallback(patternResult, patternConfidence, subject, body)) {
-            logger.info("🤖 Pattern confidence low, trying OpenAI classification...");
+        try {
+            String aiResult = openAIService.classifyEmail(subject, body);
+            logger.info("✅ OpenAI classification: {}", aiResult);
             
-            try {
-                String aiResult = openAIProcessor.classifyEmailWithAI(subject, body);
-                logger.info("✅ OpenAI classification: {}", aiResult);
-                
-                // Track usage for analytics
-                recordAIUsage("classification", "openai_used", subject.length() + body.length());
-                
-                return aiResult;
-                
-            } catch (Exception e) {
-                logger.warn("❌ OpenAI classification failed, using pattern result: {}", e.getMessage());
-                recordAIUsage("classification", "openai_failed", 0);
-                return patternResult;
-            }
+            // Track usage for analytics
+            recordAIUsage("classification", "openai_used", subject.length() + body.length());
+            
+            return aiResult;
+            
+        } catch (Exception e) {
+            logger.warn("❌ OpenAI classification failed, using fallback: {}", e.getMessage());
+            recordAIUsage("classification", "openai_failed", 0);
+            
+            // Simple fallback if OpenAI fails
+            return "ENQUIRY"; // Default to enquiry as most common type
         }
-        
-        logger.info("✅ Using pattern classification result: {}", patternResult);
-        recordAIUsage("classification", "pattern_sufficient", 0);
-        return patternResult;
     }
     
     /**
-     * Hybrid customer extraction - tries patterns first, then AI
+     * Customer extraction - directly uses OpenAI
      */
     public Customer extractCustomerInfo(String fromEmail, String body, String subject) {
-        logger.info("🔄 Starting hybrid customer extraction from: {}", fromEmail);
+        logger.info("🔄 Starting OpenAI customer extraction from: {}", fromEmail);
         
         // Check if customer already exists (skip processing if found)
         Optional<Customer> existingCustomer = customerRepository.findByEmail(fromEmail);
@@ -83,70 +67,47 @@ public class HybridEmailProcessor {
             return existingCustomer.get();
         }
         
-        // Step 1: Try pattern-based extraction
-        Customer patternCustomer = patternProcessor.extractCustomerInfo(fromEmail, body, subject);
-        double extractionScore = calculateCustomerExtractionScore(patternCustomer);
-        
-        logger.info("📊 Pattern extraction score: {:.2f} for customer: {}", 
-                   extractionScore, patternCustomer.getContactPerson());
-        
-        // Step 2: Decide if we need AI fallback
-        if (shouldUseAIForCustomerExtraction(extractionScore, body)) {
-            logger.info("🤖 Pattern extraction insufficient, trying OpenAI...");
+        try {
+            Customer aiCustomer = openAIService.extractCustomerInfo(fromEmail, body, subject);
+            logger.info("✅ OpenAI extracted customer: {} from {}", 
+                       aiCustomer.getContactPerson(), aiCustomer.getCompanyName());
             
-            try {
-                Customer aiCustomer = openAIProcessor.extractCustomerInfoWithAI(fromEmail, body, subject);
-                logger.info("✅ OpenAI extracted customer: {} from {}", 
-                           aiCustomer.getContactPerson(), aiCustomer.getCompanyName());
-                
-                recordAIUsage("customer_extraction", "openai_used", body.length());
-                return aiCustomer;
-                
-            } catch (Exception e) {
-                logger.warn("❌ OpenAI customer extraction failed, using pattern result: {}", e.getMessage());
-                recordAIUsage("customer_extraction", "openai_failed", 0);
-                return patternCustomer;
-            }
+            recordAIUsage("customer_extraction", "openai_used", body.length());
+            return aiCustomer;
+            
+        } catch (Exception e) {
+            logger.warn("❌ OpenAI customer extraction failed, using basic info: {}", e.getMessage());
+            recordAIUsage("customer_extraction", "openai_failed", 0);
+            
+            // Basic fallback if OpenAI fails
+            Customer customer = new Customer();
+            customer.setEmail(fromEmail);
+            customer.setContactPerson("Unknown");
+            customer.setCompanyName("Unknown Company");
+            return customer;
         }
-        
-        logger.info("✅ Using pattern extraction result for: {}", patternCustomer.getContactPerson());
-        recordAIUsage("customer_extraction", "pattern_sufficient", 0);
-        return patternCustomer;
     }
     
     /**
-     * Hybrid product parsing - tries patterns first, then AI
+     * Product parsing - directly uses OpenAI
      */
     public List<EnquiryItem> parseProductRequirements(String emailBody) {
-        logger.info("🔄 Starting hybrid product parsing");
+        logger.info("🔄 Starting OpenAI product parsing");
         
-        // Step 1: Try pattern-based parsing
-        List<EnquiryItem> patternItems = patternProcessor.parseProductRequirements(emailBody);
-        double parsingScore = calculateProductParsingScore(patternItems, emailBody);
-        
-        logger.info("📊 Pattern parsing score: {:.2f}, found {} items", parsingScore, patternItems.size());
-        
-        // Step 2: Decide if we need AI fallback
-        if (shouldUseAIForProductParsing(parsingScore, patternItems, emailBody)) {
-            logger.info("🤖 Pattern parsing insufficient, trying OpenAI...");
+        try {
+            List<EnquiryItem> aiItems = openAIService.parseProductRequirements(emailBody);
+            logger.info("✅ OpenAI parsed {} product items", aiItems.size());
             
-            try {
-                List<EnquiryItem> aiItems = openAIProcessor.parseProductRequirementsWithAI(emailBody);
-                logger.info("✅ OpenAI parsed {} product items", aiItems.size());
-                
-                recordAIUsage("product_parsing", "openai_used", emailBody.length());
-                return aiItems;
-                
-            } catch (Exception e) {
-                logger.warn("❌ OpenAI product parsing failed, using pattern result: {}", e.getMessage());
-                recordAIUsage("product_parsing", "openai_failed", 0);
-                return patternItems;
-            }
+            recordAIUsage("product_parsing", "openai_used", emailBody.length());
+            return aiItems;
+            
+        } catch (Exception e) {
+            logger.warn("❌ OpenAI product parsing failed, returning empty list: {}", e.getMessage());
+            recordAIUsage("product_parsing", "openai_failed", 0);
+            
+            // Return empty list if OpenAI fails
+            return new ArrayList<>();
         }
-        
-        logger.info("✅ Using pattern parsing result: {} items", patternItems.size());
-        recordAIUsage("product_parsing", "pattern_sufficient", 0);
-        return patternItems;
     }
     
     /**

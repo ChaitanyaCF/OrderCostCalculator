@@ -58,6 +58,8 @@ interface EnquiryData {
   dispatchFee: number;
   environmentalFee: number;
   electricityFee: number;
+  isStorageRequired: boolean;
+  numberOfWeeks: number;
 }
 
 // Initial state
@@ -86,7 +88,9 @@ const initialEnquiryState: EnquiryData = {
   receptionFee: 0,
   dispatchFee: 0,
   environmentalFee: 0,
-  electricityFee: 0
+  electricityFee: 0,
+  isStorageRequired: false,
+  numberOfWeeks: 1.0
 };
 
 // Main Component
@@ -251,8 +255,44 @@ const NewEnquiry: React.FC = () => {
     enquiryData.terminalCharge,
     enquiryData.freezingRate,
     enquiryData.productType,
-    enquiryData.optionalCharges
+    enquiryData.optionalCharges,
+    receptionFeeEnabled,
+    dispatchFeeEnabled,
+    environmentalFeeEnabled,
+    electricityFeeEnabled,
+    selectedFactory?.receptionFee,
+    selectedFactory?.dispatchFee,
+    selectedFactory?.environmentalFeePercentage,
+    selectedFactory?.electricityFeePercentage,
+    enquiryData.isStorageRequired,
+    enquiryData.numberOfWeeks,
+    selectedFactory?.storageRate
   ]);
+
+  // Handle mandatory portion skin selection for Portions products
+  useEffect(() => {
+    if (enquiryData.product === 'Portions') {
+      // If neither is enabled, automatically enable Portion Skin On
+      if (!portionSkinOnEnabled && !portionSkinOffEnabled) {
+        setPortionSkinOnEnabled(true);
+      }
+    } else {
+      // If not Portions product, disable both portion skin options
+      if (portionSkinOnEnabled || portionSkinOffEnabled) {
+        setPortionSkinOnEnabled(false);
+        setPortionSkinOffEnabled(false);
+        
+        // Remove any existing portion skin charges
+        const filteredCharges = enquiryData.optionalCharges.filter(
+          charge => !charge.chargeName.includes('Portion Skin')
+        );
+        setEnquiryData(prev => ({
+          ...prev,
+          optionalCharges: filteredCharges
+        }));
+      }
+    }
+  }, [enquiryData.product, portionSkinOnEnabled, portionSkinOffEnabled]);
 
   // Load trim types when product changes
   useEffect(() => {
@@ -377,6 +417,7 @@ const NewEnquiry: React.FC = () => {
   const calculateTotalCost = () => {
     console.log("FEE-DEBUG: Fee calculation info:", {
       productType: enquiryData.productType,
+      isStorageRequired: enquiryData.isStorageRequired,
       receptionFeeEnabled,
       dispatchFeeEnabled,
       environmentalFeeEnabled,
@@ -385,8 +426,18 @@ const NewEnquiry: React.FC = () => {
         receptionFee: selectedFactory?.receptionFee,
         dispatchFee: selectedFactory?.dispatchFee, 
         environmentalFeePercentage: selectedFactory?.environmentalFeePercentage,
-        electricityFeePercentage: selectedFactory?.electricityFeePercentage
-      }
+        electricityFeePercentage: selectedFactory?.electricityFeePercentage,
+        storageRate: selectedFactory?.storageRate
+      },
+      selectedFactory: selectedFactory ? {
+        id: selectedFactory.id,
+        name: selectedFactory.name,
+        receptionFee: selectedFactory.receptionFee,
+        dispatchFee: selectedFactory.dispatchFee,
+        environmentalFeePercentage: selectedFactory.environmentalFeePercentage,
+        electricityFeePercentage: selectedFactory.electricityFeePercentage,
+        storageRate: selectedFactory.storageRate
+      } : null
     });
     
     // No yield factor in main calculation
@@ -409,14 +460,20 @@ const NewEnquiry: React.FC = () => {
     // Add the new fees for frozen products
     let frozenFees = 0;
     if (enquiryData.productType === 'Frozen') {
-      // Add reception fee if enabled
+      // Add reception fee if enabled (per kg)
       if (receptionFeeEnabled && selectedFactory?.receptionFee) {
-        frozenFees += Number(selectedFactory.receptionFee);
+        frozenFees += Number(selectedFactory.receptionFee) * Number(enquiryData.quantity || 0);
       }
       
-      // Add dispatch fee if enabled 
+      // Add dispatch fee if enabled (per kg)
       if (dispatchFeeEnabled && selectedFactory?.dispatchFee) {
-        frozenFees += Number(selectedFactory.dispatchFee);
+        frozenFees += Number(selectedFactory.dispatchFee) * Number(enquiryData.quantity || 0);
+      }
+      
+      // Add storage charge if storage is required
+      if (enquiryData.isStorageRequired && selectedFactory?.storageRate) {
+        const storageCharge = Math.ceil(Number(enquiryData.numberOfWeeks || 1)) * Number(selectedFactory.storageRate);
+        frozenFees += storageCharge;
       }
     }
     
@@ -443,6 +500,8 @@ const NewEnquiry: React.FC = () => {
     console.log("FEE-DEBUG: Fee calculation result:", {
       frozenFees,
       percentageFees,
+      storageCharge: enquiryData.isStorageRequired && selectedFactory?.storageRate ? 
+        Math.ceil(Number(enquiryData.numberOfWeeks || 1)) * Number(selectedFactory.storageRate) : 0,
       total
     });
     
@@ -500,6 +559,13 @@ const NewEnquiry: React.FC = () => {
 
   // Toggle handler for Prod A/B optional charge
   const handleToggleProdAB = (isChecked: boolean) => {
+    // Check if yield value is set before enabling
+    if (isChecked && (!enquiryData.yieldValue || enquiryData.yieldValue === 0)) {
+      alert('Please set a yield value before enabling Prod A/B charge.');
+      setProdABEnabled(false);
+      return;
+    }
+    
     setProdABEnabled(isChecked);
     
     if (isChecked) {
@@ -546,6 +612,13 @@ const NewEnquiry: React.FC = () => {
 
   // Toggle handler for Descaling optional charge
   const handleToggleDescaling = (isChecked: boolean) => {
+    // Check if yield value is set before enabling
+    if (isChecked && (!enquiryData.yieldValue || enquiryData.yieldValue === 0)) {
+      alert('Please set a yield value before enabling Descaling charge.');
+      setDescalingEnabled(false);
+      return;
+    }
+    
     setDescalingEnabled(isChecked);
     
     if (isChecked) {
@@ -635,6 +708,13 @@ const NewEnquiry: React.FC = () => {
         }));
       }
     } else {
+      // For Portions products, prevent turning off if the other is also off (mandatory selection)
+      if (enquiryData.product === 'Portions' && !portionSkinOffEnabled) {
+        // Don't allow turning off if Skin Off is also off - at least one must be selected
+        setPortionSkinOnEnabled(true);
+        return;
+      }
+      
       // Remove the charge if it exists
       const existingIndex = enquiryData.optionalCharges.findIndex(
         charge => charge.chargeName.includes('Portion Skin On')
@@ -696,6 +776,13 @@ const NewEnquiry: React.FC = () => {
         }));
       }
     } else {
+      // For Portions products, prevent turning off if the other is also off (mandatory selection)
+      if (enquiryData.product === 'Portions' && !portionSkinOnEnabled) {
+        // Don't allow turning off if Skin On is also off - at least one must be selected
+        setPortionSkinOffEnabled(true);
+        return;
+      }
+      
       // Remove the charge if it exists
       const existingIndex = enquiryData.optionalCharges.findIndex(
         charge => charge.chargeName.includes('Portion Skin Off')
@@ -824,10 +911,64 @@ const NewEnquiry: React.FC = () => {
       setSelectedFactory(factory);
     } else {
       // Update the state with the new value
-      setEnquiryData(prev => ({
-        ...prev,
-        [name]: value
-      }));
+      setEnquiryData(prev => {
+        const newData = {
+          ...prev,
+          [name]: value
+        };
+        
+        // Reset storage and freezing when switching from Frozen to Fresh
+        if (name === 'productType' && value !== 'Frozen') {
+          newData.freezingType = '';
+          newData.freezingRate = 0;
+          newData.isStorageRequired = false;
+          newData.numberOfWeeks = 1.0;
+          // Also disable freezing fees when switching away from Frozen
+          setReceptionFeeEnabled(false);
+          setDispatchFeeEnabled(false);
+          setEnvironmentalFeeEnabled(false);
+          setElectricityFeeEnabled(false);
+        }
+        
+        return newData;
+      });
+      
+      // Automatically enable freezing fees when storage is required
+      if (name === 'isStorageRequired') {
+        if (value === true) {
+          // Enable all freezing fees when storage is required
+          setReceptionFeeEnabled(true);
+          setDispatchFeeEnabled(true);
+          setEnvironmentalFeeEnabled(true);
+          setElectricityFeeEnabled(true);
+        } else {
+          // Disable all freezing fees when storage is not required
+          setReceptionFeeEnabled(false);
+          setDispatchFeeEnabled(false);
+          setEnvironmentalFeeEnabled(false);
+          setElectricityFeeEnabled(false);
+        }
+      }
+      
+      // Automatically set transport mode when packaging selections change
+      if ((name === 'boxQty' || name === 'packagingType') && value && enquiryData.product && enquiryData.productType && selectedFactory?.packagingData) {
+        const matchingData = selectedFactory.packagingData.find(item => 
+          item.product === enquiryData.product &&
+          item.prod_type === enquiryData.productType &&
+          item.box_qty === (name === 'boxQty' ? value : enquiryData.boxQty) &&
+          item.pack === (name === 'packagingType' ? value : enquiryData.packagingType)
+        );
+        
+        if (matchingData && matchingData.transport_mode) {
+          setEnquiryData(prev => ({ 
+            ...prev, 
+            [name]: value,
+            transportMode: matchingData.transport_mode,
+            packagingRate: matchingData.packaging_rate || 0
+          }));
+          return; // Early return since we're updating state here
+        }
+      }
       
       // Special case for rmSpec: update the base rate when it changes
       if (name === 'rmSpec' && value && enquiryData.product && enquiryData.trimType && selectedFactory?.rateData) {
@@ -906,13 +1047,9 @@ const NewEnquiry: React.FC = () => {
           </Alert>
         )}
         
-        <Grid container spacing={3}>
+                <Grid container spacing={3}>
           <Grid item xs={12} md={8}>
             <Paper sx={{ p: 4 }}>
-              <Typography variant="h5" component="h2" gutterBottom>
-                Enquiry Details
-              </Typography>
-              
               <form onSubmit={handleSubmit}>
                 <Grid container spacing={3}>
                   {/* Factory Selection */}
@@ -991,6 +1128,10 @@ const NewEnquiry: React.FC = () => {
                     }}
                     onYieldValueChange={(value) => handleInputChange({ target: { name: 'yieldValue', value: value.toString() } } as any)}
                     onFreezingTypeChange={(value) => handleFreezingTypeChange(value)}
+                    isStorageRequired={enquiryData.isStorageRequired}
+                    numberOfWeeks={enquiryData.numberOfWeeks}
+                    onStorageRequiredChange={(value) => handleSelectChange({ target: { name: 'isStorageRequired', value } } as any)}
+                    onNumberOfWeeksChange={(value) => handleSelectChange({ target: { name: 'numberOfWeeks', value } } as any)}
                   />
 
                   {/* Packaging Details */}
@@ -1007,22 +1148,14 @@ const NewEnquiry: React.FC = () => {
                     quantity={enquiryData.quantity}
                     onBoxQtyChange={(value) => handleSelectChange({ target: { name: 'boxQty', value } } as any)}
                     onPackagingTypeChange={(value) => handleSelectChange({ target: { name: 'packagingType', value } } as any)}
-                    onTransportModeChange={(value) => handleSelectChange({ target: { name: 'transportMode', value } } as any)}
                     onPackagingRateChange={(value) => handleInputChange({ target: { name: 'packagingRate', value: value.toString() } } as any)}
                     onPalletChargeChange={(value) => handleInputChange({ target: { name: 'palletCharge', value: value.toString() } } as any)}
                     onTerminalChargeChange={(value) => handleInputChange({ target: { name: 'terminalCharge', value: value.toString() } } as any)}
                   />
 
-                  {/* Filleting Rate Calculator */}
-                  <FilletingRateCalculator
-                    product={enquiryData.product}
-                    productType={enquiryData.productType}
-                    trimType={enquiryData.trimType}
-                    onRateChange={(rate) => setEnquiryData(prev => ({ ...prev, filingRate: rate }))}
-                  />
-
+                  {/* Submit Button */}
                   <Grid item xs={12}>
-                    <Box sx={{ mt: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <Box sx={{ mt: 3 }}>
                       <Button
                         type="submit"
                         variant="contained"
@@ -1032,10 +1165,6 @@ const NewEnquiry: React.FC = () => {
                       >
                         {isSubmitting ? <CircularProgress size={24} /> : "Submit Enquiry"}
                       </Button>
-                      
-                      <Typography variant="h6">
-                        Total Cost: {selectedFactory?.currency || '$'}{Number(enquiryData.totalCost || 0).toFixed(2)}
-                      </Typography>
                     </Box>
                   </Grid>
                 </Grid>
@@ -1044,43 +1173,45 @@ const NewEnquiry: React.FC = () => {
           </Grid>
           
           <Grid item xs={12} md={4}>
-                      <CostSummary
+              <CostSummary
                 selectedFactory={selectedFactory}
                 filletingRate={enquiryData.filletingRate}
                 quantity={enquiryData.quantity}
-              yieldValue={enquiryData.yieldValue}
-              packagingRate={enquiryData.packagingRate}
-              filingRate={enquiryData.filingRate}
-              palletCharge={enquiryData.palletCharge}
-              terminalCharge={enquiryData.terminalCharge}
-              freezingRate={enquiryData.freezingRate}
-              freezingType={enquiryData.freezingType}
-              productType={enquiryData.productType}
-              optionalCharges={enquiryData.optionalCharges}
-              totalCharges={enquiryData.totalCost}
-              onToggleProdAB={handleToggleProdAB}
-              onToggleDescaling={handleToggleDescaling}
-              onTogglePortionSkinOn={handleTogglePortionSkinOn}
-              onTogglePortionSkinOff={handleTogglePortionSkinOff}
-              onTogglePalletCharge={handleTogglePalletCharge}
-              onToggleTerminalCharge={handleToggleTerminalCharge}
-              onToggleReceptionFee={handleToggleReceptionFee}
-              onToggleDispatchFee={handleToggleDispatchFee}
-              onToggleEnvironmentalFee={handleToggleEnvironmentalFee}
-              onToggleElectricityFee={handleToggleElectricityFee}
-              prodABEnabled={prodABEnabled}
-              descalingEnabled={descalingEnabled}
-              portionSkinOnEnabled={portionSkinOnEnabled}
-              portionSkinOffEnabled={portionSkinOffEnabled}
-              palletChargeEnabled={palletChargeEnabled}
-              terminalChargeEnabled={terminalChargeEnabled}
-              receptionFeeEnabled={receptionFeeEnabled}
-              dispatchFeeEnabled={dispatchFeeEnabled}
-              environmentalFeeEnabled={environmentalFeeEnabled}
-              electricityFeeEnabled={electricityFeeEnabled}
-              product={enquiryData.product}
-            />
-          </Grid>
+                yieldValue={enquiryData.yieldValue}
+                packagingRate={enquiryData.packagingRate}
+                filingRate={enquiryData.filingRate}
+                palletCharge={enquiryData.palletCharge}
+                terminalCharge={enquiryData.terminalCharge}
+                freezingRate={enquiryData.freezingRate}
+                freezingType={enquiryData.freezingType}
+                productType={enquiryData.productType}
+                optionalCharges={enquiryData.optionalCharges}
+                totalCharges={enquiryData.totalCost}
+                onToggleProdAB={handleToggleProdAB}
+                onToggleDescaling={handleToggleDescaling}
+                onTogglePortionSkinOn={handleTogglePortionSkinOn}
+                onTogglePortionSkinOff={handleTogglePortionSkinOff}
+                onTogglePalletCharge={handleTogglePalletCharge}
+                onToggleTerminalCharge={handleToggleTerminalCharge}
+                onToggleReceptionFee={handleToggleReceptionFee}
+                onToggleDispatchFee={handleToggleDispatchFee}
+                onToggleEnvironmentalFee={handleToggleEnvironmentalFee}
+                onToggleElectricityFee={handleToggleElectricityFee}
+                prodABEnabled={prodABEnabled}
+                descalingEnabled={descalingEnabled}
+                portionSkinOnEnabled={portionSkinOnEnabled}
+                portionSkinOffEnabled={portionSkinOffEnabled}
+                palletChargeEnabled={palletChargeEnabled}
+                terminalChargeEnabled={terminalChargeEnabled}
+                receptionFeeEnabled={receptionFeeEnabled}
+                dispatchFeeEnabled={dispatchFeeEnabled}
+                environmentalFeeEnabled={environmentalFeeEnabled}
+                electricityFeeEnabled={electricityFeeEnabled}
+                product={enquiryData.product}
+                isStorageRequired={enquiryData.isStorageRequired}
+                numberOfWeeks={enquiryData.numberOfWeeks}
+              />
+            </Grid>
         </Grid>
       </Container>
     </Box>

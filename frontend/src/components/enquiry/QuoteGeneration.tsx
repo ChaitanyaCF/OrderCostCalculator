@@ -149,13 +149,13 @@ const QuoteGeneration: React.FC<QuoteGenerationProps> = () => {
 
         // Initialize SKU forms from enquiry items (simplified)
         const initialForms: SKUFormData[] = data.enquiryItems.map((item, index) => ({
-          id: `sku-${index}`,
-          customerSkuReference: item.customerSkuReference || '',
-          productDescription: item.productDescription || '',
+            id: `sku-${index}`,
+            customerSkuReference: item.customerSkuReference || '',
+            productDescription: item.productDescription || '',
           requestedQuantity: item.requestedQuantity || 0,
-          deliveryRequirement: item.deliveryRequirement || '',
-          specialInstructions: item.specialInstructions || '',
-          
+            deliveryRequirement: item.deliveryRequirement || '',
+            specialInstructions: item.specialInstructions || '',
+            
           // AI-parsed fields (static)
           aiParsedProductType: item.productType || 'UNKNOWN',
           aiParsedProduct: item.product || 'UNKNOWN',
@@ -169,7 +169,7 @@ const QuoteGeneration: React.FC<QuoteGenerationProps> = () => {
           product: item.product === 'UNKNOWN' ? '' : (item.product || ''),
           trimType: item.trimType === 'UNKNOWN' ? '' : (item.trimType || ''),
           rmSpec: item.rmSpec === 'UNKNOWN' ? '' : (item.rmSpec || ''),
-          yieldValue: 0,
+            yieldValue: 0,
           freezingType: 'Tunnel Freezing', // Default for frozen products
           isStorageRequired: false,
           numberOfWeeks: 1.0,
@@ -179,12 +179,12 @@ const QuoteGeneration: React.FC<QuoteGenerationProps> = () => {
           quantity: item.requestedQuantity || 0,
           
           // Calculated rates - start at 0 like NewEnquiry
-          packagingRate: 0,
-          palletCharge: 0,
-          terminalCharge: 0,
-          freezingRate: 0,
-          filletingRate: 0,
-          totalCost: 0,
+            packagingRate: 0,
+            palletCharge: 0,
+            terminalCharge: 0,
+            freezingRate: 0,
+            filletingRate: 0,
+            totalCost: 0,
           receptionFee: 0,
           dispatchFee: 0,
           environmentalFee: 0,
@@ -472,25 +472,39 @@ const QuoteGeneration: React.FC<QuoteGenerationProps> = () => {
           if (rateData) {
             console.log('Found filleting rate data:', rateData.rate_per_kg, 'for', updatedForm.product, updatedForm.trimType, updatedForm.rmSpec);
             updatedForm.filletingRate = rateData.rate_per_kg || 0;
-          } else {
+    } else {
             console.log('No filleting rate found for:', updatedForm.product, updatedForm.trimType, updatedForm.rmSpec);
             updatedForm.filletingRate = 0;
           }
         }
         
         // Update packaging rate based on product type and product
-        if ((field === 'product' || field === 'productType') && 
+        if ((field === 'product' || field === 'productType') && updatedForm.product && updatedForm.productType) {
+          // When product or product type changes, reset packaging dependent fields
+          updatedForm.boxQty = '';
+          updatedForm.packagingType = '';
+          updatedForm.transportMode = 'TBD';
+          updatedForm.packagingRate = 0;
+        }
+
+        // When box quantity or packaging type is chosen, determine transport mode and packaging rate
+        if ((field === 'boxQty' || field === 'packagingType') &&
             updatedForm.product && updatedForm.productType && selectedFactory?.packagingData) {
-          const packagingData = selectedFactory.packagingData.find(item => 
-            item.product === updatedForm.product && 
-            item.prod_type === updatedForm.productType
+          const currentBox = field === 'boxQty' ? value : updatedForm.boxQty;
+          const currentPack = field === 'packagingType' ? value : updatedForm.packagingType;
+
+          const match = selectedFactory.packagingData.find(item =>
+            item.product === updatedForm.product &&
+            item.prod_type === updatedForm.productType &&
+            item.box_qty === currentBox &&
+            item.pack === currentPack
           );
-          
-          if (packagingData) {
-            console.log('Found packaging rate data:', packagingData.packaging_rate);
-            updatedForm.packagingRate = packagingData.packaging_rate || 0;
+
+          if (match) {
+            updatedForm.transportMode = match.transport_mode || 'TBD';
+            updatedForm.packagingRate = match.packaging_rate || 0;
           } else {
-            console.log('No packaging rate found for:', updatedForm.product, updatedForm.productType);
+            updatedForm.transportMode = 'TBD';
             updatedForm.packagingRate = 0;
           }
         }
@@ -861,19 +875,19 @@ const QuoteGeneration: React.FC<QuoteGenerationProps> = () => {
 
         {/* SKU Forms - Each SKU gets the exact NewEnquiry structure */}
         {skuForms.map((skuForm, index) => (
-          <Accordion key={skuForm.id} defaultExpanded={index === 0} sx={{ mb: 2 }}>
-            <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-              <Box sx={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
-                  <Typography variant="h6">
+            <Accordion key={skuForm.id} defaultExpanded={index === 0} sx={{ mb: 2 }}>
+              <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                <Box sx={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
+                    <Typography variant="h6">
                     SKU #{index + 1}: {skuForm.productDescription || 'No Reference'}
-                  </Typography>
-                  <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
-                    <Chip 
-                      label={`${skuForm.requestedQuantity.toLocaleString()} tons`}
-                      color="primary"
-                      size="small"
-                    />
+                    </Typography>
+                    <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
+                      <Chip 
+                        label={`${skuForm.requestedQuantity.toLocaleString()} tons`}
+                        color="primary"
+                        size="small"
+                      />
                     {skuForms.length > 1 && (
                       <IconButton
                         size="small"
@@ -887,10 +901,10 @@ const QuoteGeneration: React.FC<QuoteGenerationProps> = () => {
                         <DeleteIcon fontSize="small" />
                       </IconButton>
                     )}
+                    </Box>
                   </Box>
                 </Box>
-              </Box>
-            </AccordionSummary>
+              </AccordionSummary>
             <AccordionDetails>
               {/* Exact NewEnquiry structure for each SKU */}
               <Grid container spacing={4}>
@@ -899,9 +913,9 @@ const QuoteGeneration: React.FC<QuoteGenerationProps> = () => {
                   <Paper sx={{ p: 3 }}>
                     {/* AI-Parsed Fields */}
                     <Box sx={{ mb: 3 }}>
-                      <Typography variant="h6" gutterBottom>
+                    <Typography variant="h6" gutterBottom>
                         🧠 AI-Parsed Fields:
-                      </Typography>
+                    </Typography>
                       <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', mb: 2 }}>
                         <Chip label={`Product Type: ${skuForm.aiParsedProductType}`} variant="outlined" />
                         <Chip label={`Product Cut: ${skuForm.aiParsedProductCut}`} variant="outlined" />
@@ -909,13 +923,13 @@ const QuoteGeneration: React.FC<QuoteGenerationProps> = () => {
                         <Chip label={`RM Spec: ${skuForm.rmSpec}`} variant="outlined" />
                         <Chip label={`Packaging: ${skuForm.aiParsedPackagingType}`} variant="outlined" />
                         <Chip label={`Box Qty: ${skuForm.aiParsedBoxQty}`} variant="outlined" />
-                      </Box>
-                      
-                      {skuForm.specialInstructions && (
-                        <Typography variant="body2" sx={{ p: 2, bgcolor: 'info.light', borderRadius: 1 }}>
-                          <strong>Special Instructions:</strong> {skuForm.specialInstructions}
-                        </Typography>
-                      )}
+                          </Box>
+                        
+                        {skuForm.specialInstructions && (
+                            <Typography variant="body2" sx={{ p: 2, bgcolor: 'info.light', borderRadius: 1 }}>
+                              <strong>Special Instructions:</strong> {skuForm.specialInstructions}
+                            </Typography>
+                        )}
                     </Box>
 
                     {selectedFactory ? (
@@ -945,53 +959,58 @@ const QuoteGeneration: React.FC<QuoteGenerationProps> = () => {
                           <Divider sx={{ my: 2 }} />
                         </Grid>
 
-                        {/* Product Information - Exact same as NewEnquiry */}
+                        {/* Product Information followed by Packaging Details (stacked) */}
                         <Grid item xs={12}>
-                          <ProductInformation
-                            productTypes={productTypes}
-                            products={products}
-                            trimTypes={trimTypes}
-                            rmSpecs={rmSpecs}
-                            productType={skuForm.productType}
-                            product={skuForm.product}
-                            trimType={skuForm.trimType}
-                            rmSpec={skuForm.rmSpec}
-                            yieldValue={skuForm.yieldValue}
-                            freezingType={skuForm.freezingType}
-                            isStorageRequired={skuForm.isStorageRequired}
-                            numberOfWeeks={skuForm.numberOfWeeks}
-                            isSubmitting={false}
-                            onProductTypeChange={(value) => handleSKUFormChange(skuForm.id, 'productType', value)}
-                            onProductChange={(value) => handleSKUFormChange(skuForm.id, 'product', value)}
-                            onTrimTypeChange={(value) => handleSKUFormChange(skuForm.id, 'trimType', value)}
-                            onRmSpecChange={(value) => handleSKUFormChange(skuForm.id, 'rmSpec', value)}
-                            onYieldValueChange={(value) => handleSKUFormChange(skuForm.id, 'yieldValue', value)}
-                            onFreezingTypeChange={(value) => handleSKUFormChange(skuForm.id, 'freezingType', value)}
-                            onStorageRequiredChange={(value) => handleSKUFormChange(skuForm.id, 'isStorageRequired', value)}
-                            onNumberOfWeeksChange={(value) => handleSKUFormChange(skuForm.id, 'numberOfWeeks', value)}
-                          />
-                        </Grid>
-                        
-                        {/* Packaging Details - Exact same as NewEnquiry */}
-                        <Grid item xs={12}>
+                          <Grid container spacing={3}>
+                            <Grid item xs={12}>
+                              <Grid container spacing={2}>
+                        <ProductInformation
+                          productTypes={productTypes}
+                          products={products}
+                          trimTypes={trimTypes}
+                          rmSpecs={rmSpecs}
+                          productType={skuForm.productType}
+                          product={skuForm.product}
+                          trimType={skuForm.trimType}
+                          rmSpec={skuForm.rmSpec}
+                          yieldValue={skuForm.yieldValue}
+                          freezingType={skuForm.freezingType}
+                                  isStorageRequired={skuForm.isStorageRequired}
+                                  numberOfWeeks={skuForm.numberOfWeeks}
+                          isSubmitting={false}
+                                  onProductTypeChange={(value) => handleSKUFormChange(skuForm.id, 'productType', value)}
+                                  onProductChange={(value) => handleSKUFormChange(skuForm.id, 'product', value)}
+                                  onTrimTypeChange={(value) => handleSKUFormChange(skuForm.id, 'trimType', value)}
+                                  onRmSpecChange={(value) => handleSKUFormChange(skuForm.id, 'rmSpec', value)}
+                                  onYieldValueChange={(value) => handleSKUFormChange(skuForm.id, 'yieldValue', value)}
+                                  onFreezingTypeChange={(value) => handleSKUFormChange(skuForm.id, 'freezingType', value)}
+                                  onStorageRequiredChange={(value) => handleSKUFormChange(skuForm.id, 'isStorageRequired', value)}
+                                  onNumberOfWeeksChange={(value) => handleSKUFormChange(skuForm.id, 'numberOfWeeks', value)}
+                                />
+                              </Grid>
+                            </Grid>
+                            <Grid item xs={12}>
+                              <Grid container spacing={2}>
                           <PackagingDetails
                             product={skuForm.product}
                             productType={skuForm.productType}
                             boxQty={skuForm.boxQty}
                             packagingType={skuForm.packagingType}
                             transportMode={skuForm.transportMode}
-                            packagingRate={Number(skuForm.packagingRate) || 0}
-                            palletCharge={Number(skuForm.palletCharge) || 0}
-                            terminalCharge={Number(skuForm.terminalCharge) || 0}
+                                  packagingRate={Number(skuForm.packagingRate) || 0}
+                                  palletCharge={Number(skuForm.palletCharge) || 0}
+                                  terminalCharge={Number(skuForm.terminalCharge) || 0}
                             isSubmitting={false}
-                            quantity={Number(skuForm.quantity) || 0}
-                            onBoxQtyChange={(value) => handleSKUFormChange(skuForm.id, 'boxQty', value)}
-                            onPackagingTypeChange={(value) => handleSKUFormChange(skuForm.id, 'packagingType', value)}
-                            onTransportModeChange={(value) => handleSKUFormChange(skuForm.id, 'transportMode', value)}
-                            onPackagingRateChange={(value) => handleSKUFormChange(skuForm.id, 'packagingRate', value)}
-                            onPalletChargeChange={(value) => handleSKUFormChange(skuForm.id, 'palletCharge', value)}
-                            onTerminalChargeChange={(value) => handleSKUFormChange(skuForm.id, 'terminalCharge', value)}
-                          />
+                                  quantity={Number(skuForm.quantity) || 0}
+                                  onBoxQtyChange={(value) => handleSKUFormChange(skuForm.id, 'boxQty', value)}
+                                  onPackagingTypeChange={(value) => handleSKUFormChange(skuForm.id, 'packagingType', value)}
+                                  onPackagingRateChange={(value) => handleSKUFormChange(skuForm.id, 'packagingRate', value)}
+                                  onPalletChargeChange={(value) => handleSKUFormChange(skuForm.id, 'palletCharge', value)}
+                                  onTerminalChargeChange={(value) => handleSKUFormChange(skuForm.id, 'terminalCharge', value)}
+                                />
+                              </Grid>
+                            </Grid>
+                          </Grid>
                         </Grid>
                       </Grid>
                     ) : (
@@ -1006,21 +1025,20 @@ const QuoteGeneration: React.FC<QuoteGenerationProps> = () => {
                 <Grid item xs={12} lg={4}>
                   {selectedFactory ? (
                     <CostSummary
-                      product={skuForm.product}
-                      productType={skuForm.productType}
+                      selectedFactory={selectedFactory}
+                      filletingRate={Number(skuForm.filletingRate) || 0}
                       quantity={Number(skuForm.quantity) || 0}
+                      yieldValue={Number(skuForm.yieldValue) || 0}
                       packagingRate={Number(skuForm.packagingRate) || 0}
+                      filingRate={0}
                       palletCharge={Number(skuForm.palletCharge) || 0}
                       terminalCharge={Number(skuForm.terminalCharge) || 0}
                       freezingRate={Number(skuForm.freezingRate) || 0}
-                      enablePalletCharge={palletChargeEnabled}
-                      enableSkagerrakHandling={true}
-                      filletingRate={Number(skuForm.filletingRate) || 0}
-                      totalCost={Number(skuForm.totalCost) || 0}
-                      receptionFee={Number(selectedFactory?.receptionFee) || 0}
-                      dispatchFee={Number(selectedFactory?.dispatchFee) || 0}
-                      environmentalFee={Number(skuForm.environmentalFee) || 0}
-                      electricityFee={Number(skuForm.electricityFee) || 0}
+                      freezingType={skuForm.freezingType}
+                      productType={skuForm.productType}
+                      optionalCharges={[]}
+                      totalCharges={Number(skuForm.totalCost) || 0}
+                      product={skuForm.product}
                       onTogglePalletCharge={handleTogglePalletCharge}
                       onToggleTerminalCharge={handleToggleTerminalCharge}
                       palletChargeEnabled={palletChargeEnabled}
@@ -1034,7 +1052,6 @@ const QuoteGeneration: React.FC<QuoteGenerationProps> = () => {
                       onToggleDispatchFee={handleToggleDispatchFee}
                       onToggleEnvironmentalFee={handleToggleEnvironmentalFee}
                       onToggleElectricityFee={handleToggleElectricityFee}
-                      selectedFactory={selectedFactory}
                       isStorageRequired={skuForm.isStorageRequired}
                       numberOfWeeks={skuForm.numberOfWeeks}
                       // Optional processing charges
@@ -1058,7 +1075,7 @@ const QuoteGeneration: React.FC<QuoteGenerationProps> = () => {
           </Accordion>
         ))}
 
-        {/* Generate Quote Button */}
+      {/* Generate Quote Button */}
         <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
           <Button
             variant="contained"
@@ -1070,7 +1087,7 @@ const QuoteGeneration: React.FC<QuoteGenerationProps> = () => {
             {generating ? <CircularProgress size={20} /> : 'Generate Quote'}
           </Button>
         </Box>
-      </Container>
+    </Container>
 
       {/* Delete Confirmation Dialog */}
       <Dialog

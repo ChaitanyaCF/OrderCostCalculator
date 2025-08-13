@@ -266,11 +266,7 @@ public class ZapierDataController {
         enquiry.setEmailBody(emailBody);
         enquiry.setOriginalEmailId(emailThreadId); // Use originalEmailId for thread tracking
         
-        // Set individual email metadata fields
-        enquiry.setMessageId(messageId);
-        enquiry.setThreadId(threadId);
-        enquiry.setConversationId(conversationId);
-        enquiry.setInReplyTo(inReplyTo);
+        // Thread tracking handled via originalEmailId field above
         
         enquiry.setStatus(EnquiryStatus.RECEIVED);
         
@@ -307,75 +303,7 @@ public class ZapierDataController {
         return emailEnquiryRepository.save(enquiry);
     }
     
-    /**
-     * Extract enquiry items from email content - ENHANCED for quote generation
-     */
-    private List<EnquiryItem> extractEnquiryItems(String emailBody, String subject) {
-        List<EnquiryItem> items = new ArrayList<>();
-        
-        // Extract quantity and product type
-        String text = emailBody + " " + subject;
-        String lowerText = text.toLowerCase();
-        
-        // Extract quantity (look for numbers followed by kg, tons, etc.)
-        Pattern quantityPattern = Pattern.compile("(\\d+(?:\\.\\d+)?)\\s*(kg|kgs|tons?|tonnes?|lbs?|pounds?)", Pattern.CASE_INSENSITIVE);
-        Matcher quantityMatcher = quantityPattern.matcher(text);
-        
-        Integer quantity = 1;
-        String unit = "kg";
-        if (quantityMatcher.find()) {
-            double qty = Double.parseDouble(quantityMatcher.group(1));
-            unit = quantityMatcher.group(2).toLowerCase();
-            
-            // Convert to kg if needed
-            if (unit.contains("ton")) {
-                qty = qty * 1000; // tons to kg
-            } else if (unit.contains("lb") || unit.contains("pound")) {
-                qty = qty * 0.453592; // pounds to kg
-            }
-            
-            quantity = (int) Math.round(qty);
-        }
-        
-        // Extract main product type (aligned with database enum)
-        String product = extractProductType(lowerText);
-        String trimType = extractTrimType(lowerText);
-        String rmSpec = extractRmSpec(lowerText);
-        String productType = extractProductionType(lowerText);
-        String packagingType = extractPackagingType(lowerText);
-        String transportMode = extractTransportMode(lowerText);
-        
-        // Create enquiry item using ALL required fields for quote generation
-        EnquiryItem item = new EnquiryItem();
-        
-        // Core product info
-        item.setProduct(product);  // SALMON, COD, HADDOCK, etc.
-        item.setTrimType(trimType);  // FILLET, WHOLE, STEAK, etc.
-        item.setRmSpec(rmSpec);  // Raw material specification
-        item.setProductType(productType);  // Production type for packaging rates
-        item.setPackagingType(packagingType);  // Packaging method
-        item.setTransportMode(transportMode);  // Transport requirements
-        
-        // Quantity and descriptions
-        item.setRequestedQuantity(quantity);
-        item.setProductDescription(buildProductDescription(product, trimType, quantity, unit, rmSpec));
-        item.setSpecialInstructions(extractSpecialRequirements(text));
-        
-        // Customer reference if mentioned
-        item.setCustomerSkuReference(extractCustomerSku(text));
-        
-        // Delivery requirements
-        item.setDeliveryRequirement(lowerText.contains("urgent") || lowerText.contains("asap") ? "URGENT" : "STANDARD");
-        
-        // AI processing metadata
-        item.setAiMapped(true);
-        item.setMappingConfidence(calculateMappingConfidence(product, trimType, rmSpec, quantity));
-        item.setAiProcessingNotes("Enhanced extraction via Zapier webhook - ready for quote generation");
-        item.setProcessedAt(LocalDateTime.now());
-        
-        items.add(item);
-        return items;
-    }
+
     
     /**
      * Extract product type aligned with database enums - NO HARDCODED DEFAULTS

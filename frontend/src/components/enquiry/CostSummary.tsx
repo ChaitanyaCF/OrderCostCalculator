@@ -42,6 +42,8 @@ interface CostSummaryProps {
   environmentalFeeEnabled?: boolean;
   electricityFeeEnabled?: boolean;
   product?: string;
+  isStorageRequired?: boolean;
+  numberOfWeeks?: number;
 }
 
 export const CostSummary: React.FC<CostSummaryProps> = ({
@@ -78,11 +80,45 @@ export const CostSummary: React.FC<CostSummaryProps> = ({
   dispatchFeeEnabled = false,
   environmentalFeeEnabled = false,
   electricityFeeEnabled = false,
-  product
+  product,
+  isStorageRequired = false,
+  numberOfWeeks = 1.0
 }) => {
   const getCurrencySymbol = () => selectedFactory?.currency || '$';
 
   const currencySymbol = getCurrencySymbol();
+
+  // Calculate environmental and electricity fee amounts
+  const calculateEnvironmentalFee = () => {
+    if (!environmentalFeeEnabled || !selectedFactory?.environmentalFeePercentage) return 0;
+    
+    // Calculate subtotal for percentage calculation (everything except reception/dispatch fees and percentage fees)
+    const filletingAmount = Number(filletingRate || 0) * Number(quantity || 0);
+    const packageAmount = Number(packagingRate || 0) * Number(quantity || 0);
+    const additionalCharges = Number(filingRate || 0) + Number(palletCharge || 0) + Number(terminalCharge || 0);
+    const freezingAmount = productType === 'Frozen' && freezingRate > 0 ? Number(freezingRate || 0) : 0;
+    const optionalTotal = optionalCharges.reduce((sum, charge) => sum + Number(charge.chargeValue || 0), 0);
+    
+    const subtotalForPercentage = filletingAmount + packageAmount + additionalCharges + freezingAmount + optionalTotal;
+    return subtotalForPercentage * (Number(selectedFactory.environmentalFeePercentage) / 100);
+  };
+
+  const calculateElectricityFee = () => {
+    if (!electricityFeeEnabled || !selectedFactory?.electricityFeePercentage) return 0;
+    
+    // Calculate subtotal for percentage calculation (everything except reception/dispatch fees and percentage fees)
+    const filletingAmount = Number(filletingRate || 0) * Number(quantity || 0);
+    const packageAmount = Number(packagingRate || 0) * Number(quantity || 0);
+    const additionalCharges = Number(filingRate || 0) + Number(palletCharge || 0) + Number(terminalCharge || 0);
+    const freezingAmount = productType === 'Frozen' && freezingRate > 0 ? Number(freezingRate || 0) : 0;
+    const optionalTotal = optionalCharges.reduce((sum, charge) => sum + Number(charge.chargeValue || 0), 0);
+    
+    const subtotalForPercentage = filletingAmount + packageAmount + additionalCharges + freezingAmount + optionalTotal;
+    return subtotalForPercentage * (Number(selectedFactory.electricityFeePercentage) / 100);
+  };
+
+  const environmentalFeeAmount = calculateEnvironmentalFee();
+  const electricityFeeAmount = calculateElectricityFee();
 
   return (
     <Paper sx={{ p: 4, height: '100%' }}>
@@ -92,34 +128,31 @@ export const CostSummary: React.FC<CostSummaryProps> = ({
       
       <Box sx={{ mt: 3 }}>
         <Typography variant="subtitle1" gutterBottom fontWeight="bold">
-          Product Cost
+          Base Processing Charges
         </Typography>
         
         <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-          <Typography>Filleting Rate (per kg):</Typography>
-          <Typography>{getCurrencySymbol()}{Number(filletingRate || 0).toFixed(2)}</Typography>
+          <Typography>Filleting</Typography>
+          <Typography>{getCurrencySymbol()}{Number(filletingRate || 0).toFixed(2)}/kg</Typography>
         </Box>
         
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-          <Typography>Subtotal:</Typography>
-          <Typography>{getCurrencySymbol()}{Number(filletingRate || 0).toFixed(2)}</Typography>
-        </Box>
-        
-        <Divider sx={{ my: 2 }} />
-        
-        <Typography variant="subtitle1" gutterBottom fontWeight="bold">
-          Packaging
-        </Typography>
+        {/* Only show freezing in base charges when Frozen + freezing type selected */}
+        {productType === 'Frozen' && freezingType && (
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+            <Typography>Freezing</Typography>
+            <Typography>{getCurrencySymbol()}{Number(freezingRate || 0).toFixed(2)}/kg</Typography>
+          </Box>
+        )}
         
         <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-          <Typography>Packaging Rate:</Typography>
-          <Typography>{getCurrencySymbol()}{Number(packagingRate || 0).toFixed(2)}</Typography>
+          <Typography>Packaging</Typography>
+          <Typography>{getCurrencySymbol()}{Number(packagingRate || 0).toFixed(2)}/kg</Typography>
         </Box>
            
         <Divider sx={{ my: 2 }} />
         
         <Typography variant="subtitle1" gutterBottom fontWeight="bold">
-          Compulsory Charges
+          Additional Charges
         </Typography>
         
         {onTogglePalletCharge && onToggleTerminalCharge && (
@@ -161,72 +194,19 @@ export const CostSummary: React.FC<CostSummaryProps> = ({
           </>
         )}
         
-        {productType === 'Frozen' && onToggleReceptionFee && onToggleDispatchFee && onToggleEnvironmentalFee && onToggleElectricityFee && (
+
+        
+        {/* Only show Optional/Processing Charges section if there are any charges to display */}
+        {((onToggleProdAB && onToggleDescaling && (optionalCharges.some(charge => charge.chargeName.includes('Fillet')) || product?.includes('Fillet'))) || 
+          (onTogglePortionSkinOn && onTogglePortionSkinOff && (optionalCharges.some(charge => charge.chargeName.includes('Portion')) || product?.includes('Portion')))) && (
           <>
-           
             <Divider sx={{ my: 2 }} />
             
             <Typography variant="subtitle1" gutterBottom fontWeight="bold">
-              Freezing Charges
+              {product?.toLowerCase().includes('portion') ? 'Processing Charges' : 'Optional Charges'}
             </Typography>
-            
-            {productType === 'Frozen' && freezingType && (
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-            <Typography>{freezingType} ({getCurrencySymbol()}{Number(freezingRate).toFixed(2)}/kg):</Typography>
-            <Typography>{getCurrencySymbol()}{Number(freezingRate || 0).toFixed(2)}</Typography>
-          </Box>
-        )}
-            
-            <FormGroup sx={{ mb: 2 }}>
-              <FormControlLabel 
-                control={
-                  <Switch 
-                    checked={receptionFeeEnabled}
-                    onChange={(e) => onToggleReceptionFee(e.target.checked)}
-                    size="small"
-                  />
-                } 
-                label={`Reception Fee (${currencySymbol}${Number(selectedFactory?.receptionFee || 0).toFixed(2)})`}
-              />
-              <FormControlLabel 
-                control={
-                  <Switch 
-                    checked={dispatchFeeEnabled}
-                    onChange={(e) => onToggleDispatchFee(e.target.checked)}
-                    size="small"
-                  />
-                } 
-                label={`Dispatch Fee (${currencySymbol}${Number(selectedFactory?.dispatchFee || 0).toFixed(2)})`}
-              />
-              <FormControlLabel 
-                control={
-                  <Switch 
-                    checked={environmentalFeeEnabled}
-                    onChange={(e) => onToggleEnvironmentalFee(e.target.checked)}
-                    size="small"
-                  />
-                } 
-                label={`Environmental Fee (${Number(selectedFactory?.environmentalFeePercentage || 0).toFixed(1)}%)`}
-              />
-              <FormControlLabel 
-                control={
-                  <Switch 
-                    checked={electricityFeeEnabled}
-                    onChange={(e) => onToggleElectricityFee(e.target.checked)}
-                    size="small"
-                  />
-                } 
-                label={`Electricity Fee (${Number(selectedFactory?.electricityFeePercentage || 0).toFixed(1)}%)`}
-              />
-            </FormGroup>
           </>
         )}
-        
-        <Divider sx={{ my: 2 }} />
-        
-        <Typography variant="subtitle1" gutterBottom fontWeight="bold">
-          Optional Charges
-        </Typography>
         
         {onToggleProdAB && onToggleDescaling && (optionalCharges.some(charge => charge.chargeName.includes('Fillet')) || product?.includes('Fillet')) && (
           <FormGroup sx={{ mb: 2 }}>
@@ -296,10 +276,104 @@ export const CostSummary: React.FC<CostSummaryProps> = ({
           <Typography color="text.secondary">No optional charges added</Typography>
         )}
         
+        {/* Only show Freezing Charges section when storage is required */}
+        {productType === 'Frozen' && isStorageRequired && (
+          <>
+            <Divider sx={{ my: 2 }} />
+            
+            <Typography variant="subtitle1" gutterBottom fontWeight="bold">
+              Freezing Charges
+            </Typography>
+            
+            {/* Reception Fee */}
+            {onToggleReceptionFee && (
+              <FormControlLabel 
+                control={
+                  <Switch 
+                    checked={receptionFeeEnabled}
+                    onChange={(e) => onToggleReceptionFee(e.target.checked)}
+                    size="small"
+                  />
+                } 
+                label={`Reception Fee (${currencySymbol}${Number(selectedFactory?.receptionFee || 0).toFixed(2)}/kg)`}
+                sx={{ mb: 1 }}
+              />
+            )}
+            
+            {/* Dispatch Fee */}
+            {onToggleDispatchFee && (
+              <FormControlLabel 
+                control={
+                  <Switch 
+                    checked={dispatchFeeEnabled}
+                    onChange={(e) => onToggleDispatchFee(e.target.checked)}
+                    size="small"
+                  />
+                } 
+                label={`Dispatch Fee (${currencySymbol}${Number(selectedFactory?.dispatchFee || 0).toFixed(2)}/kg)`}
+                sx={{ mb: 1 }}
+              />
+            )}
+            
+            {/* Environmental Fee */}
+            {onToggleEnvironmentalFee && (
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
+                <FormControlLabel 
+                  control={
+                    <Switch 
+                      checked={environmentalFeeEnabled}
+                      onChange={(e) => onToggleEnvironmentalFee(e.target.checked)}
+                      size="small"
+                    />
+                  } 
+                  label={`Environmental Fee (${Number(selectedFactory?.environmentalFeePercentage || 0).toFixed(1)}%)`}
+                />
+                <Typography>{getCurrencySymbol()}{environmentalFeeAmount.toFixed(2)}</Typography>
+              </Box>
+            )}
+            
+            {/* Electricity Fee */}
+            {onToggleElectricityFee && (
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
+                <FormControlLabel 
+                  control={
+                    <Switch 
+                      checked={electricityFeeEnabled}
+                      onChange={(e) => onToggleElectricityFee(e.target.checked)}
+                      size="small"
+                    />
+                  } 
+                  label={`Electricity Fee (${Number(selectedFactory?.electricityFeePercentage || 0).toFixed(1)}%)`}
+                />
+                <Typography>{getCurrencySymbol()}{electricityFeeAmount.toFixed(2)}</Typography>
+              </Box>
+            )}
+            
+            {/* Storage Rate and Charge */}
+            {selectedFactory?.storageRate && (
+              <>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                  <Typography>Storage Rate Per Week</Typography>
+                  <Typography>{getCurrencySymbol()}{Number(selectedFactory.storageRate).toFixed(2)}/kg</Typography>
+                </Box>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                  <Typography>Storage Charge ({Math.ceil(numberOfWeeks)} {Math.ceil(numberOfWeeks) === 1 ? 'week' : 'weeks'})</Typography>
+                  <Typography>{getCurrencySymbol()}{(Math.ceil(numberOfWeeks) * selectedFactory.storageRate).toFixed(2)}</Typography>
+                </Box>
+              </>
+            )}
+          </>
+        )}
+        
         <Divider sx={{ my: 2 }} />
         
         <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-          <Typography variant="h6">Total:</Typography>
+          <Typography>Quantity:</Typography>
+          <Typography>{quantity} kg</Typography>
+        </Box>
+        
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+          <Typography variant="h6">Total Cost:</Typography>
           <Typography variant="h6" color="primary">{getCurrencySymbol()}{Number(totalCharges || 0).toFixed(2)}</Typography>
         </Box>
       </Box>

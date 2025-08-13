@@ -15,7 +15,6 @@ interface PackagingDetailsProps {
   quantity?: number;
   onBoxQtyChange: (value: string) => void;
   onPackagingTypeChange: (value: string) => void;
-  onTransportModeChange: (value: string) => void;
   onPackagingRateChange: (value: number) => void;
   onPalletChargeChange: (value: number) => void;
   onTerminalChargeChange: (value: number) => void;
@@ -34,7 +33,6 @@ export const PackagingDetails: React.FC<PackagingDetailsProps> = ({
   quantity,
   onBoxQtyChange,
   onPackagingTypeChange,
-  onTransportModeChange,
   onPackagingRateChange,
   onPalletChargeChange,
   onTerminalChargeChange
@@ -111,14 +109,10 @@ export const PackagingDetails: React.FC<PackagingDetailsProps> = ({
       const uniqueModes = Array.from(new Set(modes.filter(Boolean))).sort();
       setTransportModes(uniqueModes);
       
-      if (uniqueModes.length === 1) {
-        onTransportModeChange(uniqueModes[0]);
-      } else if (!uniqueModes.includes(transportMode)) {
-        onTransportModeChange('');
-      }
+      // Transport mode is now automatically determined - no manual change needed
+      // The parent component should handle setting the transport mode based on selections
     } else {
       setTransportModes([]);
-      onTransportModeChange('');
     }
   }, [packagingType, product, productType, boxQty, selectedFactory]);
 
@@ -176,13 +170,14 @@ export const PackagingDetails: React.FC<PackagingDetailsProps> = ({
       </Grid>
 
       <Grid item xs={12} sm={6}>
-        <FormControl fullWidth required disabled={!product}>
+        <FormControl fullWidth required disabled={!product} size="small">
           <InputLabel>Box Quantity</InputLabel>
           <Select
             value={boxQty}
             label="Box Quantity"
             onChange={(e) => onBoxQtyChange(e.target.value)}
             disabled={isSubmitting || !product}
+            size="small"
           >
             {boxQuantities.map((qty) => (
               <MenuItem key={qty} value={qty}>{qty}</MenuItem>
@@ -192,13 +187,14 @@ export const PackagingDetails: React.FC<PackagingDetailsProps> = ({
       </Grid>
 
       <Grid item xs={12} sm={6}>
-        <FormControl fullWidth required disabled={!boxQty}>
+        <FormControl fullWidth required disabled={!boxQty} size="small">
           <InputLabel>Packaging Type</InputLabel>
           <Select
             value={packagingType}
             label="Packaging Type"
             onChange={(e) => onPackagingTypeChange(e.target.value)}
             disabled={isSubmitting || !boxQty}
+            size="small"
           >
             {packagingTypes.map((type) => (
               <MenuItem key={type} value={type}>{type}</MenuItem>
@@ -208,19 +204,17 @@ export const PackagingDetails: React.FC<PackagingDetailsProps> = ({
       </Grid>
 
       <Grid item xs={12} sm={6}>
-        <FormControl fullWidth required disabled={!packagingType}>
-          <InputLabel>Transport Mode</InputLabel>
-          <Select
-            value={transportMode}
-            label="Transport Mode"
-            onChange={(e) => onTransportModeChange(e.target.value)}
-            disabled={isSubmitting || !packagingType}
-          >
-            {transportModes.map((mode) => (
-              <MenuItem key={mode} value={mode}>{mode}</MenuItem>
-            ))}
-          </Select>
-        </FormControl>
+        <TextField
+          fullWidth
+          label="Transport Mode"
+          value={transportMode}
+          InputProps={{
+            readOnly: true,
+          }}
+          helperText="Automatically determined by Box Quantity and Pack Type"
+          disabled={isSubmitting || !packagingType}
+          size="small"
+        />
       </Grid>
 
       <Grid item xs={12} sm={6}>
@@ -234,6 +228,7 @@ export const PackagingDetails: React.FC<PackagingDetailsProps> = ({
             inputProps: { min: 0, step: 0.01 }
           }}
           disabled={true}
+          size="small"
         />
       </Grid>
 

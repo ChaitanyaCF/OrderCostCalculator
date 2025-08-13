@@ -478,6 +478,16 @@ public class FactoryController {
                 }
             }
             
+            // Update currency if provided
+            if (properties.containsKey("currency")) {
+                Object currencyObj = properties.get("currency");
+                if (currencyObj != null) {
+                    String currency = currencyObj.toString();
+                    factory.setCurrency(currency);
+                    logger.debug("Updated currency to {}", currency);
+                }
+            }
+            
             // Update reception fee if provided
             if (properties.containsKey("receptionFee")) {
                 Object receptionFeeObj = properties.get("receptionFee");
@@ -551,6 +561,158 @@ public class FactoryController {
                     }
                     factory.setElectricityFeePercentage(electricityFee);
                     logger.debug("Updated electricityFeePercentage to {}", electricityFee);
+                }
+            }
+            
+            // Update storage rate if provided
+            if (properties.containsKey("storageRate")) {
+                Object storageRateObj = properties.get("storageRate");
+                if (storageRateObj != null) {
+                    Double storageRate;
+                    if (storageRateObj instanceof Double) {
+                        storageRate = (Double) storageRateObj;
+                    } else if (storageRateObj instanceof Integer) {
+                        storageRate = ((Integer) storageRateObj).doubleValue();
+                    } else if (storageRateObj instanceof String) {
+                        storageRate = Double.parseDouble((String) storageRateObj);
+                    } else {
+                        storageRate = 0.0;
+                    }
+                    factory.setStorageRate(storageRate);
+                    logger.debug("Updated storageRate to {}", storageRate);
+                }
+            }
+            
+            // Update tunnel freezing rate if provided
+            if (properties.containsKey("tunnelFreezingRate")) {
+                Object tunnelFreezingRateObj = properties.get("tunnelFreezingRate");
+                if (tunnelFreezingRateObj != null) {
+                    Double tunnelFreezingRate;
+                    if (tunnelFreezingRateObj instanceof Double) {
+                        tunnelFreezingRate = (Double) tunnelFreezingRateObj;
+                    } else if (tunnelFreezingRateObj instanceof Integer) {
+                        tunnelFreezingRate = ((Integer) tunnelFreezingRateObj).doubleValue();
+                    } else if (tunnelFreezingRateObj instanceof String) {
+                        tunnelFreezingRate = Double.parseDouble((String) tunnelFreezingRateObj);
+                    } else {
+                        tunnelFreezingRate = 0.0;
+                    }
+                    factory.setTunnelFreezingRate(tunnelFreezingRate);
+                    logger.debug("Updated tunnelFreezingRate to {}", tunnelFreezingRate);
+                }
+            }
+            
+            // Update gyro freezing rate if provided
+            if (properties.containsKey("gyroFreezingRate")) {
+                Object gyroFreezingRateObj = properties.get("gyroFreezingRate");
+                if (gyroFreezingRateObj != null) {
+                    Double gyroFreezingRate;
+                    if (gyroFreezingRateObj instanceof Double) {
+                        gyroFreezingRate = (Double) gyroFreezingRateObj;
+                    } else if (gyroFreezingRateObj instanceof Integer) {
+                        gyroFreezingRate = ((Integer) gyroFreezingRateObj).doubleValue();
+                    } else if (gyroFreezingRateObj instanceof String) {
+                        gyroFreezingRate = Double.parseDouble((String) gyroFreezingRateObj);
+                    } else {
+                        gyroFreezingRate = 0.0;
+                    }
+                    factory.setGyroFreezingRate(gyroFreezingRate);
+                    logger.debug("Updated gyroFreezingRate to {}", gyroFreezingRate);
+                }
+            }
+            
+            // Update handling charges if provided
+            if (properties.containsKey("handlingCharges")) {
+                Object handlingChargesObj = properties.get("handlingCharges");
+                if (handlingChargesObj != null) {
+                    Double handlingCharges;
+                    if (handlingChargesObj instanceof Double) {
+                        handlingCharges = (Double) handlingChargesObj;
+                    } else if (handlingChargesObj instanceof Integer) {
+                        handlingCharges = ((Integer) handlingChargesObj).doubleValue();
+                    } else if (handlingChargesObj instanceof String) {
+                        handlingCharges = Double.parseDouble((String) handlingChargesObj);
+                    } else {
+                        handlingCharges = 0.0;
+                    }
+                    factory.setHandlingCharges(handlingCharges);
+                    logger.debug("Updated handlingCharges to {}", handlingCharges);
+                }
+            }
+            
+            // Update portion skin on rate if provided
+            if (properties.containsKey("portionSkinOnRate")) {
+                Object portionSkinOnRateObj = properties.get("portionSkinOnRate");
+                if (portionSkinOnRateObj != null) {
+                    Double portionSkinOnRate;
+                    if (portionSkinOnRateObj instanceof Double) {
+                        portionSkinOnRate = (Double) portionSkinOnRateObj;
+                    } else if (portionSkinOnRateObj instanceof Integer) {
+                        portionSkinOnRate = ((Integer) portionSkinOnRateObj).doubleValue();
+                    } else if (portionSkinOnRateObj instanceof String) {
+                        portionSkinOnRate = Double.parseDouble((String) portionSkinOnRateObj);
+                    } else {
+                        portionSkinOnRate = 0.0;
+                    }
+                    factory.setPortionSkinOnRate(portionSkinOnRate);
+                    logger.debug("Updated portionSkinOnRate to {}", portionSkinOnRate);
+                }
+            }
+            
+            // Update portion skin off rate if provided
+            if (properties.containsKey("portionSkinOffRate")) {
+                Object portionSkinOffRateObj = properties.get("portionSkinOffRate");
+                if (portionSkinOffRateObj != null) {
+                    Double portionSkinOffRate;
+                    if (portionSkinOffRateObj instanceof Double) {
+                        portionSkinOffRate = (Double) portionSkinOffRateObj;
+                    } else if (portionSkinOffRateObj instanceof Integer) {
+                        portionSkinOffRate = ((Integer) portionSkinOffRateObj).doubleValue();
+                    } else if (portionSkinOffRateObj instanceof String) {
+                        portionSkinOffRate = Double.parseDouble((String) portionSkinOffRateObj);
+                    } else {
+                        portionSkinOffRate = 0.0;
+                    }
+                    factory.setPortionSkinOffRate(portionSkinOffRate);
+                    logger.debug("Updated portionSkinOffRate to {}", portionSkinOffRate);
+                }
+            }
+            
+            // Update prod A/B rate if provided
+            if (properties.containsKey("prodABRate")) {
+                Object prodABRateObj = properties.get("prodABRate");
+                if (prodABRateObj != null) {
+                    Double prodABRate;
+                    if (prodABRateObj instanceof Double) {
+                        prodABRate = (Double) prodABRateObj;
+                    } else if (prodABRateObj instanceof Integer) {
+                        prodABRate = ((Integer) prodABRateObj).doubleValue();
+                    } else if (prodABRateObj instanceof String) {
+                        prodABRate = Double.parseDouble((String) prodABRateObj);
+                    } else {
+                        prodABRate = 0.0;
+                    }
+                    factory.setProdABRate(prodABRate);
+                    logger.debug("Updated prodABRate to {}", prodABRate);
+                }
+            }
+            
+            // Update descaling rate if provided
+            if (properties.containsKey("descalingRate")) {
+                Object descalingRateObj = properties.get("descalingRate");
+                if (descalingRateObj != null) {
+                    Double descalingRate;
+                    if (descalingRateObj instanceof Double) {
+                        descalingRate = (Double) descalingRateObj;
+                    } else if (descalingRateObj instanceof Integer) {
+                        descalingRate = ((Integer) descalingRateObj).doubleValue();
+                    } else if (descalingRateObj instanceof String) {
+                        descalingRate = Double.parseDouble((String) descalingRateObj);
+                    } else {
+                        descalingRate = 0.0;
+                    }
+                    factory.setDescalingRate(descalingRate);
+                    logger.debug("Updated descalingRate to {}", descalingRate);
                 }
             }
             

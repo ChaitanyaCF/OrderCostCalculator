@@ -24,6 +24,14 @@ export interface Factory {
   dispatchFee?: number;
   environmentalFeePercentage?: number;
   electricityFeePercentage?: number;
+  storageRate?: number;
+  tunnelFreezingRate?: number;
+  gyroFreezingRate?: number;
+  handlingCharges?: number;
+  portionSkinOnRate?: number;
+  portionSkinOffRate?: number;
+  prodABRate?: number;
+  descalingRate?: number;
   packagingData?: csvLoader.PackageOption[];
   rateData?: csvLoader.RateOption[];
   chargeRates?: ChargeRateOption[];
@@ -41,7 +49,15 @@ export const DEFAULT_FACTORIES: Factory[] = [
     receptionFee: 0.10,
     dispatchFee: 0.15,
     environmentalFeePercentage: 2.0,
-    electricityFeePercentage: 1.5
+    electricityFeePercentage: 1.5,
+    storageRate: 0.50,
+    tunnelFreezingRate: 1.65,
+    gyroFreezingRate: 2.00,
+    handlingCharges: 0.00,
+    portionSkinOnRate: 0.00,
+    portionSkinOffRate: 0.00,
+    prodABRate: 0.00,
+    descalingRate: 0.00
   },
   { 
     id: 2, 
@@ -53,7 +69,15 @@ export const DEFAULT_FACTORIES: Factory[] = [
     receptionFee: 0.08,
     dispatchFee: 0.12,
     environmentalFeePercentage: 1.8,
-    electricityFeePercentage: 1.2
+    electricityFeePercentage: 1.2,
+    storageRate: 0.45,
+    tunnelFreezingRate: 1.50,
+    gyroFreezingRate: 1.80,
+    handlingCharges: 0.00,
+    portionSkinOnRate: 0.00,
+    portionSkinOffRate: 0.00,
+    prodABRate: 0.00,
+    descalingRate: 0.00
   },
   { 
     id: 3, 
@@ -65,7 +89,15 @@ export const DEFAULT_FACTORIES: Factory[] = [
     receptionFee: 0.07,
     dispatchFee: 0.10,
     environmentalFeePercentage: 1.5,
-    electricityFeePercentage: 1.0
+    electricityFeePercentage: 1.0,
+    storageRate: 0.40,
+    tunnelFreezingRate: 1.70,
+    gyroFreezingRate: 2.10,
+    handlingCharges: 0.00,
+    portionSkinOnRate: 0.00,
+    portionSkinOffRate: 0.00,
+    prodABRate: 0.00,
+    descalingRate: 0.00
   }
 ];
 
@@ -144,7 +176,16 @@ interface FactoryContextType {
     receptionFee?: number,
     dispatchFee?: number,
     environmentalFeePercentage?: number,
-    electricityFeePercentage?: number
+    electricityFeePercentage?: number,
+    storageRate?: number,
+    tunnelFreezingRate?: number,
+    gyroFreezingRate?: number,
+    handlingCharges?: number,
+    portionSkinOnRate?: number,
+    portionSkinOffRate?: number,
+    prodABRate?: number,
+    descalingRate?: number,
+    currency?: string
   ) => Promise<void>;
   getPackagingData: () => csvLoader.PackageOption[];
   getRateData: () => csvLoader.RateOption[];
@@ -369,7 +410,16 @@ export const FactoryProvider: React.FC<FactoryProviderProps> = ({ children }) =>
     receptionFee?: number,
     dispatchFee?: number,
     environmentalFeePercentage?: number,
-    electricityFeePercentage?: number
+    electricityFeePercentage?: number,
+    storageRate?: number,
+    tunnelFreezingRate?: number,
+    gyroFreezingRate?: number,
+    handlingCharges?: number,
+    portionSkinOnRate?: number,
+    portionSkinOffRate?: number,
+    prodABRate?: number,
+    descalingRate?: number,
+    currency?: string
   ): Promise<void> => {
     try {
       setLoading(true);
@@ -401,7 +451,11 @@ export const FactoryProvider: React.FC<FactoryProviderProps> = ({ children }) =>
       // Update factory properties if any provided
       if (palletCharge !== undefined || terminalCharge !== undefined || 
           receptionFee !== undefined || dispatchFee !== undefined ||
-          environmentalFeePercentage !== undefined || electricityFeePercentage !== undefined) {
+          environmentalFeePercentage !== undefined || electricityFeePercentage !== undefined ||
+          storageRate !== undefined || tunnelFreezingRate !== undefined ||
+          gyroFreezingRate !== undefined || handlingCharges !== undefined ||
+          portionSkinOnRate !== undefined || portionSkinOffRate !== undefined ||
+          prodABRate !== undefined || descalingRate !== undefined || currency !== undefined) {
         const updatedProperties: Partial<Factory> = {
           ...factory,
           palletCharge: palletCharge !== undefined ? palletCharge : factory.palletCharge,
@@ -409,7 +463,16 @@ export const FactoryProvider: React.FC<FactoryProviderProps> = ({ children }) =>
           receptionFee: receptionFee !== undefined ? receptionFee : factory.receptionFee,
           dispatchFee: dispatchFee !== undefined ? dispatchFee : factory.dispatchFee,
           environmentalFeePercentage: environmentalFeePercentage !== undefined ? environmentalFeePercentage : factory.environmentalFeePercentage,
-          electricityFeePercentage: electricityFeePercentage !== undefined ? electricityFeePercentage : factory.electricityFeePercentage
+          electricityFeePercentage: electricityFeePercentage !== undefined ? electricityFeePercentage : factory.electricityFeePercentage,
+          storageRate: storageRate !== undefined ? storageRate : factory.storageRate,
+          tunnelFreezingRate: tunnelFreezingRate !== undefined ? tunnelFreezingRate : factory.tunnelFreezingRate,
+          gyroFreezingRate: gyroFreezingRate !== undefined ? gyroFreezingRate : factory.gyroFreezingRate,
+          handlingCharges: handlingCharges !== undefined ? handlingCharges : factory.handlingCharges,
+          portionSkinOnRate: portionSkinOnRate !== undefined ? portionSkinOnRate : factory.portionSkinOnRate,
+          portionSkinOffRate: portionSkinOffRate !== undefined ? portionSkinOffRate : factory.portionSkinOffRate,
+          prodABRate: prodABRate !== undefined ? prodABRate : factory.prodABRate,
+          descalingRate: descalingRate !== undefined ? descalingRate : factory.descalingRate,
+          currency: currency !== undefined ? currency : factory.currency
         };
         updatedFactory = await factoryService.updateFactoryProperties(factoryId, updatedProperties);
         console.log("Updated factory properties:", updatedFactory);

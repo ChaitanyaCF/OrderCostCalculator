@@ -126,6 +126,8 @@ const FactoryRateCard: React.FC = () => {
   // For auth refreshing
   const [authRetryCount, setAuthRetryCount] = useState(0);
   
+  // Remove the flag - we'll fix this properly
+  
   // Add pagination state variables
   const [packagingPage, setPackagingPage] = useState(0);
   const [packagingRowsPerPage, setPackagingRowsPerPage] = useState(10);
@@ -274,6 +276,8 @@ const FactoryRateCard: React.FC = () => {
   useEffect(() => {
     if (selectedFactory) {
       console.log("Selected factory changed to:", selectedFactory.name);
+      
+      // No need for skip logic anymore
       
       // Reset pagination to first page when factory changes
       setPackagingPage(0);
@@ -743,24 +747,57 @@ const FactoryRateCard: React.FC = () => {
           // 4. Skip loading from server entirely for delete operations
           console.log("Skipping data reload after deletion operation");
         } else {
-          // Only reload data for non-delete operations
-          console.log("Not a deletion operation - refreshing data");
-          loadFactoryData(selectedFactory);
+          // For non-delete operations, don't reload data immediately
+          // The contextUpdateFactoryData call below will handle the update
+          console.log("Not a deletion operation - skipping data reload to preserve changes");
         }
       }
       
+      // Save all the updated factory properties to the database
       await contextUpdateFactoryData(
         selectedFactory.id, 
         validPackagingData,
         validRateData,
-        undefined,
+        undefined, // chargeRates
         selectedFactory.palletCharge,
         selectedFactory.terminalCharge,
         selectedFactory.receptionFee,
         selectedFactory.dispatchFee,
         selectedFactory.environmentalFeePercentage,
-        selectedFactory.electricityFeePercentage
+        selectedFactory.electricityFeePercentage,
+        selectedFactory.storageRate,
+        selectedFactory.tunnelFreezingRate,
+        selectedFactory.gyroFreezingRate,
+        selectedFactory.handlingCharges,
+        selectedFactory.portionSkinOnRate,
+        selectedFactory.portionSkinOffRate,
+        selectedFactory.prodABRate,
+        selectedFactory.descalingRate,
+        selectedFactory.currency
       );
+      
+      // CRITICAL: Update the local selectedFactory object to ensure UI shows the saved values
+      // This prevents the values from reverting to old data
+      setSelectedFactory({
+        ...selectedFactory,
+        palletCharge: selectedFactory.palletCharge,
+        terminalCharge: selectedFactory.terminalCharge,
+        receptionFee: selectedFactory.receptionFee,
+        dispatchFee: selectedFactory.dispatchFee,
+        environmentalFeePercentage: selectedFactory.environmentalFeePercentage,
+        electricityFeePercentage: selectedFactory.electricityFeePercentage,
+        storageRate: selectedFactory.storageRate,
+        tunnelFreezingRate: selectedFactory.tunnelFreezingRate,
+        gyroFreezingRate: selectedFactory.gyroFreezingRate,
+        handlingCharges: selectedFactory.handlingCharges,
+        portionSkinOnRate: selectedFactory.portionSkinOnRate,
+        portionSkinOffRate: selectedFactory.portionSkinOffRate,
+        prodABRate: selectedFactory.prodABRate,
+        descalingRate: selectedFactory.descalingRate,
+        // Also preserve the data arrays
+        packagingData: validPackagingData,
+        rateData: validRateData
+      });
       
       setDataChanged(false);
       const successMsg = `Data saved successfully! Saved ${validPackagingData.length} packaging rates and ${validRateData.length} product rates for ${selectedFactory.name}.`;
@@ -1279,18 +1316,47 @@ const FactoryRateCard: React.FC = () => {
           </Grid>
         </Paper>
         
-       {/* Factory Global Charges Section */}
+       {/* Combined Factory Rate Card Section */}
 {selectedFactory && (
   <Paper sx={{ p: 3, mb: 4 }}>
+    {/* Factory Global Charges */}
     <Typography variant="h6" gutterBottom>Factory Global Charges</Typography>
-    <Typography variant="body2" color="textSecondary" sx={{ mb: 2 }}>
+    <Typography variant="body2" color="textSecondary" sx={{ mb: 3 }}>
       These charges are applied at factory level for all enquiries.
     </Typography>
     
-    <Grid container spacing={3}>
+    <Grid container spacing={3} sx={{ mb: 4 }}>
+      {/* Currency Dropdown */}
+      <Grid item xs={12} sm={6} md={3}>
+        <FormControl fullWidth size="small">
+          <InputLabel>Currency</InputLabel>
+          <Select
+            value={selectedFactory.currency || 'DKK'}
+            label="Currency"
+            onChange={(e) => {
+              if (selectedFactory) {
+                setSelectedFactory({
+                  ...selectedFactory,
+                  currency: e.target.value
+                });
+                setDataChanged(true);
+              }
+            }}
+          >
+            <MenuItem value="DKK">DKK (kr)</MenuItem>
+            <MenuItem value="EUR">EUR (€)</MenuItem>
+            <MenuItem value="USD">USD ($)</MenuItem>
+            <MenuItem value="GBP">GBP (£)</MenuItem>
+            <MenuItem value="NOK">NOK (kr)</MenuItem>
+            <MenuItem value="SEK">SEK (kr)</MenuItem>
+          </Select>
+        </FormControl>
+      </Grid>
+      
       <Grid item xs={12} sm={6} md={3}>
         <TextField
           fullWidth
+          size="small"
           label="Pallet Charge"
           type="number"
           value={selectedFactory.palletCharge || 0}
@@ -1305,9 +1371,8 @@ const FactoryRateCard: React.FC = () => {
             }
           }}
           InputProps={{
-            startAdornment: (
-              <InputAdornment position="start">{selectedFactory.currency}</InputAdornment>
-            ),
+            startAdornment: <InputAdornment position="start">{selectedFactory.currency || 'DKK'}</InputAdornment>,
+            endAdornment: <InputAdornment position="end">/kg</InputAdornment>,
             inputProps: { min: 0, step: 0.01 }
           }}
         />
@@ -1316,6 +1381,7 @@ const FactoryRateCard: React.FC = () => {
       <Grid item xs={12} sm={6} md={3}>
         <TextField
           fullWidth
+          size="small"
           label="Terminal Charge"
           type="number"
           value={selectedFactory.terminalCharge || 0}
@@ -1330,18 +1396,17 @@ const FactoryRateCard: React.FC = () => {
             }
           }}
           InputProps={{
-            startAdornment: (
-              <InputAdornment position="start">{selectedFactory.currency}</InputAdornment>
-            ),
+            startAdornment: <InputAdornment position="start">{selectedFactory.currency || 'DKK'}</InputAdornment>,
+            endAdornment: <InputAdornment position="end">/kg</InputAdornment>,
             inputProps: { min: 0, step: 0.01 }
           }}
         />
       </Grid>
       
-      {/* New Reception Fee field */}
       <Grid item xs={12} sm={6} md={3}>
         <TextField
           fullWidth
+          size="small"
           label="Reception Fee"
           type="number"
           value={selectedFactory.receptionFee || 0}
@@ -1356,18 +1421,17 @@ const FactoryRateCard: React.FC = () => {
             }
           }}
           InputProps={{
-            startAdornment: (
-              <InputAdornment position="start">{selectedFactory.currency}</InputAdornment>
-            ),
+            startAdornment: <InputAdornment position="start">{selectedFactory.currency || 'DKK'}</InputAdornment>,
+            endAdornment: <InputAdornment position="end">/kg</InputAdornment>,
             inputProps: { min: 0, step: 0.01 }
           }}
         />
       </Grid>
       
-      {/* New Dispatch Fee field */}
       <Grid item xs={12} sm={6} md={3}>
         <TextField
           fullWidth
+          size="small"
           label="Dispatch Fee"
           type="number"
           value={selectedFactory.dispatchFee || 0}
@@ -1382,18 +1446,42 @@ const FactoryRateCard: React.FC = () => {
             }
           }}
           InputProps={{
-            startAdornment: (
-              <InputAdornment position="start">{selectedFactory.currency}</InputAdornment>
-            ),
+            startAdornment: <InputAdornment position="start">{selectedFactory.currency || 'DKK'}</InputAdornment>,
+            endAdornment: <InputAdornment position="end">/kg</InputAdornment>,
             inputProps: { min: 0, step: 0.01 }
           }}
         />
       </Grid>
       
-      {/* New Environmental Fee field (percentage) */}
       <Grid item xs={12} sm={6} md={3}>
         <TextField
           fullWidth
+          size="small" 
+          label="Storage Rate Per Week"
+          type="number"
+          value={selectedFactory.storageRate || 0}
+          onChange={(e) => {
+            const value = parseFloat(e.target.value);
+            if (!isNaN(value) && selectedFactory) {
+              setSelectedFactory({
+                ...selectedFactory,
+                storageRate: value
+              });
+              setDataChanged(true);
+            }
+          }}
+          InputProps={{
+            startAdornment: <InputAdornment position="start">{selectedFactory.currency || 'DKK'}</InputAdornment>,
+            endAdornment: <InputAdornment position="end">/kg</InputAdornment>,
+            inputProps: { min: 0, step: 0.01 }
+          }}
+        />
+      </Grid>
+      
+      <Grid item xs={12} sm={6} md={3}>
+        <TextField
+          fullWidth
+          size="small"
           label="Environmental Fee"
           type="number"
           value={selectedFactory.environmentalFeePercentage || 0}
@@ -1408,18 +1496,16 @@ const FactoryRateCard: React.FC = () => {
             }
           }}
           InputProps={{
-            endAdornment: (
-              <InputAdornment position="end">%</InputAdornment>
-            ),
+            endAdornment: <InputAdornment position="end">%</InputAdornment>,
             inputProps: { min: 0, step: 0.1 }
           }}
         />
       </Grid>
       
-      {/* New Electricity Fee field (percentage) */}
       <Grid item xs={12} sm={6} md={3}>
         <TextField
           fullWidth
+          size="small"
           label="Electricity Fee"
           type="number"
           value={selectedFactory.electricityFeePercentage || 0}
@@ -1434,10 +1520,195 @@ const FactoryRateCard: React.FC = () => {
             }
           }}
           InputProps={{
-            endAdornment: (
-              <InputAdornment position="end">%</InputAdornment>
-            ),
+            endAdornment: <InputAdornment position="end">%</InputAdornment>,
             inputProps: { min: 0, step: 0.1 }
+          }}
+        />
+      </Grid>
+    </Grid>
+
+    {/* Freezing Rates */}
+    <Typography variant="subtitle1" gutterBottom sx={{ fontWeight: 600, mt: 3, mb: 2 }}>Freezing Rates</Typography>
+    <Grid container spacing={3} sx={{ mb: 4 }}>
+      <Grid item xs={12} sm={6} md={3}>
+        <TextField
+          fullWidth
+          size="small"
+          label="Tunnel Freezing Rate"
+          type="number"
+          value={selectedFactory.tunnelFreezingRate || 0}
+          onChange={(e) => {
+            const value = parseFloat(e.target.value);
+            if (!isNaN(value) && selectedFactory) {
+              setSelectedFactory({
+                ...selectedFactory,
+                tunnelFreezingRate: value
+              });
+              setDataChanged(true);
+            }
+          }}
+          InputProps={{
+            startAdornment: <InputAdornment position="start">{selectedFactory.currency || 'DKK'}</InputAdornment>,
+            endAdornment: <InputAdornment position="end">/kg</InputAdornment>,
+            inputProps: { min: 0, step: 0.01 }
+          }}
+        />
+      </Grid>
+      
+      <Grid item xs={12} sm={6} md={3}>
+        <TextField
+          fullWidth
+          size="small"
+          label="Gyro Freezing Rate"
+          type="number"
+          value={selectedFactory.gyroFreezingRate || 0}
+          onChange={(e) => {
+            const value = parseFloat(e.target.value);
+            if (!isNaN(value) && selectedFactory) {
+              setSelectedFactory({
+                ...selectedFactory,
+                gyroFreezingRate: value
+              });
+              setDataChanged(true);
+            }
+          }}
+          InputProps={{
+            startAdornment: <InputAdornment position="start">{selectedFactory.currency || 'DKK'}</InputAdornment>,
+            endAdornment: <InputAdornment position="end">/kg</InputAdornment>,
+            inputProps: { min: 0, step: 0.01 }
+          }}
+        />
+      </Grid>
+    </Grid>
+
+    {/* Processing Charges */}
+    <Typography variant="subtitle1" gutterBottom sx={{ fontWeight: 600, mt: 3, mb: 2 }}>Processing Charges</Typography>
+    <Grid container spacing={3} sx={{ mb: 4 }}>
+      <Grid item xs={12} sm={6} md={3}>
+        <TextField
+          fullWidth
+          size="small"
+          label="Handling Charges"
+          type="number"
+          value={selectedFactory.handlingCharges || 0}
+          onChange={(e) => {
+            const value = parseFloat(e.target.value);
+            if (!isNaN(value) && selectedFactory) {
+              setSelectedFactory({
+                ...selectedFactory,
+                handlingCharges: value
+              });
+              setDataChanged(true);
+            }
+          }}
+          InputProps={{
+            startAdornment: <InputAdornment position="start">{selectedFactory.currency || 'DKK'}</InputAdornment>,
+            endAdornment: <InputAdornment position="end">/kg</InputAdornment>,
+            inputProps: { min: 0, step: 0.01 }
+          }}
+        />
+      </Grid>
+      
+      <Grid item xs={12} sm={6} md={3}>
+        <TextField
+          fullWidth
+          size="small"
+          label="Portion Skin On Rate"
+          type="number"
+          value={selectedFactory.portionSkinOnRate || 0}
+          onChange={(e) => {
+            const value = parseFloat(e.target.value);
+            if (!isNaN(value) && selectedFactory) {
+              setSelectedFactory({
+                ...selectedFactory,
+                portionSkinOnRate: value
+              });
+              setDataChanged(true);
+            }
+          }}
+          InputProps={{
+            startAdornment: <InputAdornment position="start">{selectedFactory.currency || 'DKK'}</InputAdornment>,
+            endAdornment: <InputAdornment position="end">/kg</InputAdornment>,
+            inputProps: { min: 0, step: 0.01 }
+          }}
+        />
+      </Grid>
+      
+      <Grid item xs={12} sm={6} md={3}>
+        <TextField
+          fullWidth
+          size="small"
+          label="Portion Skin Off Rate"
+          type="number"
+          value={selectedFactory.portionSkinOffRate || 0}
+          onChange={(e) => {
+            const value = parseFloat(e.target.value);
+            if (!isNaN(value) && selectedFactory) {
+              setSelectedFactory({
+                ...selectedFactory,
+                portionSkinOffRate: value
+              });
+              setDataChanged(true);
+            }
+          }}
+          InputProps={{
+            startAdornment: <InputAdornment position="start">{selectedFactory.currency || 'DKK'}</InputAdornment>,
+            endAdornment: <InputAdornment position="end">/kg</InputAdornment>,
+            inputProps: { min: 0, step: 0.01 }
+          }}
+        />
+      </Grid>
+    </Grid>
+
+    {/* Optional Charges */}
+    <Typography variant="subtitle1" gutterBottom sx={{ fontWeight: 600, mt: 3, mb: 2 }}>Optional Charges</Typography>
+    <Grid container spacing={3} sx={{ mb: 2 }}>
+      <Grid item xs={12} sm={6} md={3}>
+        <TextField
+          fullWidth
+          size="small"
+          label="Prod A/B"
+          type="number"
+          value={selectedFactory.prodABRate || 0}
+          onChange={(e) => {
+            const value = parseFloat(e.target.value);
+            if (!isNaN(value) && selectedFactory) {
+              setSelectedFactory({
+                ...selectedFactory,
+                prodABRate: value
+              });
+              setDataChanged(true);
+            }
+          }}
+          InputProps={{
+            startAdornment: <InputAdornment position="start">{selectedFactory.currency || 'DKK'}</InputAdornment>,
+            endAdornment: <InputAdornment position="end">/kg</InputAdornment>,
+            inputProps: { min: 0, step: 0.01 }
+          }}
+        />
+      </Grid>
+      
+      <Grid item xs={12} sm={6} md={3}>
+        <TextField
+          fullWidth
+          size="small"
+          label="Descaling"
+          type="number"
+          value={selectedFactory.descalingRate || 0}
+          onChange={(e) => {
+            const value = parseFloat(e.target.value);
+            if (!isNaN(value) && selectedFactory) {
+              setSelectedFactory({
+                ...selectedFactory,
+                descalingRate: value
+              });
+              setDataChanged(true);
+            }
+          }}
+          InputProps={{
+            startAdornment: <InputAdornment position="start">{selectedFactory.currency || 'DKK'}</InputAdornment>,
+            endAdornment: <InputAdornment position="end">/kg</InputAdornment>,
+            inputProps: { min: 0, step: 0.01 }
           }}
         />
       </Grid>

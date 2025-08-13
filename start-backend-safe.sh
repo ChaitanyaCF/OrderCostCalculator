@@ -66,10 +66,13 @@ fi
 
 # Verify database path in application.properties
 echo -e "${YELLOW}🔍 Verifying database configuration...${NC}"
-if grep -q "jdbc:h2:file:/Users/chaitanyavallabhaneni/Downloads/OrderCostCalculator/backend/data/procostdb_new" src/main/resources/application.properties; then
-    echo -e "${GREEN}✅ Database path is correctly configured${NC}"
+if grep -q "jdbc:h2:file:/Users/chaitanyavallabhaneni/Downloads/OrderCostCalculator/docker-data/procostdb_new" src/main/resources/application.properties; then
+    echo -e "${GREEN}✅ Database path is correctly configured (Absolute Docker database path)${NC}"
 else
     echo -e "${RED}❌ Database path may not be correctly configured${NC}"
+    echo "Expected: jdbc:h2:file:/Users/chaitanyavallabhaneni/Downloads/OrderCostCalculator/docker-data/procostdb_new"
+    echo "Current config in application.properties:"
+    grep "spring.datasource.url" src/main/resources/application.properties || echo "Not found"
 fi
 
 # Display startup information
@@ -84,6 +87,14 @@ echo "=================================================="
 # Start the backend with explicit directory settings
 echo -e "${GREEN}🚀 Starting Maven Spring Boot application...${NC}"
 echo "Command: mvn spring-boot:run -Dmaven.multiModuleProjectDirectory=\"$BACKEND_DIR\""
+
+# Set OpenAI API key (you'll need to replace this with your actual key)
+if [ -z "$OPENAI_API_KEY" ]; then
+    echo -e "${YELLOW}⚠️  OpenAI API key not set. AI processing will be disabled.${NC}"
+    echo -e "${YELLOW}   To enable AI processing, set OPENAI_API_KEY environment variable${NC}"
+    export OPENAI_API_KEY=""
+fi
+
 echo "=================================================="
 
 # Start in foreground so we can see output

@@ -57,6 +57,38 @@ public class Factory {
     @DecimalMin(value = "0.0", inclusive = true, message = "Electricity fee percentage must be greater than or equal to 0")
     private Double electricityFeePercentage = 0.0;
     
+    @Column(nullable = true)
+    @DecimalMin(value = "0.0", inclusive = true, message = "Storage rate must be greater than or equal to 0")
+    private Double storageRate = 0.0;
+    
+    @Column(nullable = true)
+    @DecimalMin(value = "0.0", inclusive = true, message = "Tunnel freezing rate must be greater than or equal to 0")
+    private Double tunnelFreezingRate = 0.0;
+    
+    @Column(nullable = true)
+    @DecimalMin(value = "0.0", inclusive = true, message = "Gyro freezing rate must be greater than or equal to 0")
+    private Double gyroFreezingRate = 0.0;
+    
+    @Column(nullable = true)
+    @DecimalMin(value = "0.0", inclusive = true, message = "Handling charges must be greater than or equal to 0")
+    private Double handlingCharges = 0.0;
+    
+    @Column(nullable = true)
+    @DecimalMin(value = "0.0", inclusive = true, message = "Portion skin on rate must be greater than or equal to 0")
+    private Double portionSkinOnRate = 0.0;
+    
+    @Column(nullable = true)
+    @DecimalMin(value = "0.0", inclusive = true, message = "Portion skin off rate must be greater than or equal to 0")
+    private Double portionSkinOffRate = 0.0;
+    
+    @Column(nullable = true)
+    @DecimalMin(value = "0.0", inclusive = true, message = "Prod A/B rate must be greater than or equal to 0")
+    private Double prodABRate = 0.0;
+    
+    @Column(nullable = true)
+    @DecimalMin(value = "0.0", inclusive = true, message = "Descaling rate must be greater than or equal to 0")
+    private Double descalingRate = 0.0;
+    
     @OneToMany(mappedBy = "factory", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonManagedReference
     private List<PackagingRate> packagingRates = new ArrayList<>();
@@ -161,6 +193,70 @@ public class Factory {
     
     public void setElectricityFeePercentage(Double electricityFeePercentage) {
         this.electricityFeePercentage = electricityFeePercentage;
+    }
+    
+        public Double getStorageRate() {
+        return storageRate;
+    }
+
+    public void setStorageRate(Double storageRate) {
+        this.storageRate = storageRate;
+    }
+
+    public Double getTunnelFreezingRate() {
+        return tunnelFreezingRate;
+    }
+
+    public void setTunnelFreezingRate(Double tunnelFreezingRate) {
+        this.tunnelFreezingRate = tunnelFreezingRate;
+    }
+
+    public Double getGyroFreezingRate() {
+        return gyroFreezingRate;
+    }
+
+    public void setGyroFreezingRate(Double gyroFreezingRate) {
+        this.gyroFreezingRate = gyroFreezingRate;
+    }
+
+    public Double getHandlingCharges() {
+        return handlingCharges;
+    }
+
+    public void setHandlingCharges(Double handlingCharges) {
+        this.handlingCharges = handlingCharges;
+    }
+
+    public Double getPortionSkinOnRate() {
+        return portionSkinOnRate;
+    }
+
+    public void setPortionSkinOnRate(Double portionSkinOnRate) {
+        this.portionSkinOnRate = portionSkinOnRate;
+    }
+
+    public Double getPortionSkinOffRate() {
+        return portionSkinOffRate;
+    }
+
+    public void setPortionSkinOffRate(Double portionSkinOffRate) {
+        this.portionSkinOffRate = portionSkinOffRate;
+    }
+
+    public Double getProdABRate() {
+        return prodABRate;
+    }
+
+    public void setProdABRate(Double prodABRate) {
+        this.prodABRate = prodABRate;
+    }
+
+    public Double getDescalingRate() {
+        return descalingRate;
+    }
+
+    public void setDescalingRate(Double descalingRate) {
+        this.descalingRate = descalingRate;
     }
     
     public List<PackagingRate> getPackagingRates() {

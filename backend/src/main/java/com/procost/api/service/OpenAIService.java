@@ -50,8 +50,11 @@ public class OpenAIService {
             // Create OpenAI service with timeout
             OpenAiService service = new OpenAiService(openaiApiKey, Duration.ofSeconds(60));
             
+            // 🌍 Step 1: Translate to English if needed
+            String translatedEmailBody = translateToEnglish(service, emailBody);
+            
             // Create comprehensive prompt
-            String prompt = createProductParsingPrompt(emailBody);
+            String prompt = createProductParsingPrompt(translatedEmailBody);
             logger.info("📝 Sending prompt to OpenAI (length: {} chars)", prompt.length());
             
             // Create chat completion request
@@ -113,7 +116,11 @@ public class OpenAIService {
         try {
             OpenAiService service = new OpenAiService(openaiApiKey, Duration.ofSeconds(40));
             
-            String prompt = createCustomerExtractionPrompt(fromEmail, emailBody, subject);
+            // 🌍 Translate email content if needed
+            String translatedEmailBody = translateToEnglish(service, emailBody);
+            String translatedSubject = translateToEnglish(service, subject);
+            
+            String prompt = createCustomerExtractionPrompt(fromEmail, translatedEmailBody, translatedSubject);
             
             ChatCompletionRequest chatRequest = ChatCompletionRequest.builder()
                     .model(openaiModel)
@@ -160,7 +167,11 @@ public class OpenAIService {
         try {
             OpenAiService service = new OpenAiService(openaiApiKey, Duration.ofSeconds(40));
             
-            String prompt = createClassificationPrompt(subject, emailBody);
+            // 🌍 Translate content before classification
+            String translatedSubject = translateToEnglish(service, subject);
+            String translatedEmailBody = translateToEnglish(service, emailBody);
+            
+            String prompt = createClassificationPrompt(translatedSubject, translatedEmailBody);
             
             ChatCompletionRequest chatRequest = ChatCompletionRequest.builder()
                     .model(openaiModel)
@@ -466,4 +477,78 @@ public class OpenAIService {
         }
         return "Unknown Company";
     }
-} 
+    
+    /**
+     * Translate email to English if needed
+     */
+    private String translateToEnglish(OpenAiService service, String emailBody) {
+        logger.info("🌍 Checking if translation is needed...");
+        
+        try {
+            // First, detect if email is in English
+            String detectionPrompt = String.format(
+                "Analyze this email and respond with just 'ENGLISH' if it's primarily in English, " +
+                "or the language name (e.g., 'SPANISH', 'FRENCH', 'GERMAN', 'DANISH',etc) if it's in another language:\n\n%s",
+                emailBody.length() > 500 ? emailBody.substring(0, 500) + "..." : emailBody
+            );
+            
+            ChatCompletionRequest detectionRequest = ChatCompletionRequest.builder()
+                    .model(openaiModel)
+                    .messages(Arrays.asList(
+                            new ChatMessage(ChatMessageRole.USER.value(), detectionPrompt)
+                    ))
+                    .maxTokens(50)
+                    .temperature(0.1)
+                    .build();
+            
+            ChatCompletionResult detectionResult = service.createChatCompletion(detectionRequest);
+            String detectedLanguage = detectionResult.getChoices().get(0).getMessage().getContent().trim().toUpperCase();
+            
+            logger.info("🗣️ Detected language: {}", detectedLanguage);
+            
+            // If already in English, return as-is
+            if ("ENGLISH".equals(detectedLanguage)) {
+                logger.info("✅ Email is already in English, no translation needed");
+                return emailBody;
+            }
+            
+            // Translate to English
+            logger.info("🔄 Translating from {} to English...", detectedLanguage);
+            
+            String translationPrompt = String.format(
+                "Translate this email to English. Preserve all product names, quantities, dates, and technical terms exactly. " +
+                "Maintain the structure and formatting. Do not add explanations, just provide the translation:\n\n%s",
+                emailBody
+            );
+            
+            ChatCompletionRequest translationRequest = ChatCompletionRequest.builder()
+                    .model(openaiModel)
+                    .messages(Arrays.asList(
+                            new ChatMessage(ChatMessageRole.SYSTEM.value(), 
+                                "You are a professional translator specializing in business communications. " +
+                                "Translate accurately while preserving technical terms, product specifications, and quantities."),
+                            new ChatMessage(ChatMessageRole.USER.value(), translationPrompt)
+                    ))
+                    .maxTokens(2000)
+                    .temperature(0.1)
+                    .build();
+            
+            ChatCompletionResult translationResult = service.createChatCompletion(translationRequest);
+            String translatedText = translationResult.getChoices().get(0).getMessage().getContent().trim();
+            
+            // 📋 LOG TRANSLATION DETAILS
+            logger.info("🌍 TRANSLATION COMPLETED:");
+            logger.info("Original Language: {}", detectedLanguage);
+            logger.info("Original Text (first 200 chars): {}", 
+                       emailBody.length() > 200 ? emailBody.substring(0, 200) + "..." : emailBody);
+            logger.info("Translated Text (first 200 chars): {}", 
+                       translatedText.length() > 200 ? translatedText.substring(0, 200) + "..." : translatedText);
+            
+            return translatedText;
+            
+        } catch (Exception e) {
+            logger.warn("❌ Translation failed, using original text: {}", e.getMessage());
+            return emailBody;
+        }
+    }
+}

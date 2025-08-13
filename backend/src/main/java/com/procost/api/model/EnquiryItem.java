@@ -46,8 +46,28 @@ public class EnquiryItem {
     @Size(max = 100)
     private String packagingType;
     
+    @Column(name = "pack_material")
+    @Size(max = 100)
+    private String packMaterial;
+    
+    @Column(name = "box_quantity")
+    @Size(max = 50)
+    private String boxQuantity;
+    
     @Size(max = 100)
     private String transportMode;
+    
+    @Column(name = "product_cut")
+    @Size(max = 50)
+    private String productCut;
+    
+    @Column(name = "skin_option")
+    @Size(max = 20)
+    private String skinOption;
+    
+    @Column(name = "special_requirements")
+    @Lob
+    private String specialRequirements;
     
     // Calculated pricing
     private Double unitPrice;
@@ -177,6 +197,22 @@ public class EnquiryItem {
     
     public void setPackagingType(String packagingType) {
         this.packagingType = packagingType;
+    }
+    
+    public String getPackMaterial() {
+        return packMaterial;
+    }
+    
+    public void setPackMaterial(String packMaterial) {
+        this.packMaterial = packMaterial;
+    }
+    
+    public String getBoxQuantity() {
+        return boxQuantity;
+    }
+    
+    public void setBoxQuantity(String boxQuantity) {
+        this.boxQuantity = boxQuantity;
     }
     
     public String getTransportMode() {

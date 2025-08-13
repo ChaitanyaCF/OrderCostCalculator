@@ -189,11 +189,7 @@ public class EmailEnquiryController {
         dto.put("emailBody", enquiry.getEmailBody());
         dto.put("originalEmailId", enquiry.getOriginalEmailId());
         
-        // Individual email metadata fields
-        dto.put("messageId", enquiry.getMessageId());
-        dto.put("threadId", enquiry.getThreadId());
-        dto.put("conversationId", enquiry.getConversationId());
-        dto.put("inReplyTo", enquiry.getInReplyTo());
+        // Thread tracking via originalEmailId field
         
         // Customer info
         if (enquiry.getCustomer() != null) {
@@ -253,8 +249,8 @@ public class EmailEnquiryController {
         dto.put("rmSpec", item.getRmSpec());
         dto.put("productType", item.getProductType());
         dto.put("packagingType", item.getPackagingType());
-        dto.put("packMaterial", item.getPackMaterial());
-        dto.put("boxQuantity", item.getBoxQuantity());
+        dto.put("packMaterial", item.getPackMaterial() != null ? item.getPackMaterial() : "Not specified");
+        dto.put("boxQuantity", item.getBoxQuantity() != null ? item.getBoxQuantity() : "Not specified");
         dto.put("transportMode", item.getTransportMode());
         
         // Pricing (if available)

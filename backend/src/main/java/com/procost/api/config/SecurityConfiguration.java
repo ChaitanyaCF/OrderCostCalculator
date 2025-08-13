@@ -66,6 +66,7 @@ public class SecurityConfiguration {
                 .antMatchers("/api/test/**").permitAll()
                 .antMatchers("/h2-console/**").permitAll()
                 .antMatchers("/webhooks/**").permitAll()
+                .antMatchers("/api/zapier/**").permitAll()
                 // Whitelist static assets to avoid 401 errors
                 .antMatchers("/favicon.ico").permitAll()
                 .antMatchers("/static/**").permitAll()

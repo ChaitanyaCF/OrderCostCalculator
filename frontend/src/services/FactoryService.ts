@@ -71,6 +71,14 @@ const convertToFrontendFactory = (backendFactory: any): Factory => {
     dispatchFee: backendFactory.dispatchFee || 0,
     environmentalFeePercentage: backendFactory.environmentalFeePercentage || 0,
     electricityFeePercentage: backendFactory.electricityFeePercentage || 0,
+    storageRate: backendFactory.storageRate || 0,
+    tunnelFreezingRate: backendFactory.tunnelFreezingRate || 0,
+    gyroFreezingRate: backendFactory.gyroFreezingRate || 0,
+    handlingCharges: backendFactory.handlingCharges || 0,
+    portionSkinOnRate: backendFactory.portionSkinOnRate || 0,
+    portionSkinOffRate: backendFactory.portionSkinOffRate || 0,
+    prodABRate: backendFactory.prodABRate || 0,
+    descalingRate: backendFactory.descalingRate || 0,
     packagingData: backendFactory.packagingRates ? backendFactory.packagingRates.map((pr: any) => ({
       prod_type: pr.prodType,
       product: pr.product,
@@ -603,12 +611,21 @@ export const updateFactoryProperties = async (factoryId: number, properties: Par
   try {
     console.log(`Updating factory ${factoryId} properties:`, properties);
     const payload = {
+      currency: properties.currency,
       palletCharge: properties.palletCharge,
       terminalCharge: properties.terminalCharge,
       receptionFee: properties.receptionFee,
       dispatchFee: properties.dispatchFee,
       environmentalFeePercentage: properties.environmentalFeePercentage,
-      electricityFeePercentage: properties.electricityFeePercentage
+      electricityFeePercentage: properties.electricityFeePercentage,
+      storageRate: properties.storageRate,
+      tunnelFreezingRate: properties.tunnelFreezingRate,
+      gyroFreezingRate: properties.gyroFreezingRate,
+      handlingCharges: properties.handlingCharges,
+      portionSkinOnRate: properties.portionSkinOnRate,
+      portionSkinOffRate: properties.portionSkinOffRate,
+      prodABRate: properties.prodABRate,
+      descalingRate: properties.descalingRate
     };
     
     const response = await axios.patch(

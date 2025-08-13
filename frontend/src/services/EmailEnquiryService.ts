@@ -44,6 +44,8 @@ export interface EnquiryItem {
   rmSpec?: string;
   productType?: string;
   packagingType?: string;
+  packMaterial?: string;
+  boxQuantity?: string;
   transportMode?: string;
   unitPrice?: number;
   totalPrice?: number;
@@ -173,6 +175,20 @@ class EmailEnquiryService {
     }
   }
 
+  // Get dashboard statistics for enquiries
+  async getDashboardStats() {
+    try {
+      const response = await axios.get(
+        `${API_BASE_URL}/api/email-enquiries/dashboard/stats`,
+        getHeaders()
+      );
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching dashboard stats:', error);
+      throw error;
+    }
+  }
+
   // Quote acceptance
   async simulateQuoteAcceptance(quoteData: {
     quoteNumber: string;
@@ -225,100 +241,45 @@ class EmailEnquiryService {
     }
   }
 
-  // Get dashboard statistics (mock for now)
-  async getDashboardStats() {
+
+
+  // Get all enquiries from real API
+  // Get enquiry by ID
+  async getEnquiryById(enquiryId: string): Promise<EmailEnquiry> {
     try {
-      // TODO: Replace with actual API call
-      return {
-        totalEnquiries: 15,
-        pendingQuotes: 8,
-        activeOrders: 12,
-        totalCustomers: 25,
-        recentActivity: [
-          {
-            id: 1,
-            type: 'ENQUIRY',
-            title: 'New enquiry from ABC Corp',
-            description: 'Salmon fillet request - 500kg',
-            timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
-            status: 'PROCESSING'
-          },
-          {
-            id: 2,
-            type: 'QUOTE',
-            title: 'Quote QUO-2024-001 sent',
-            description: 'Sent to customer@example.com',
-            timestamp: new Date(Date.now() - 4 * 60 * 60 * 1000).toISOString(),
-            status: 'SENT'
-          },
-          {
-            id: 3,
-            type: 'ORDER',
-            title: 'Order ORD-2024-001 confirmed',
-            description: 'Production started',
-            timestamp: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
-            status: 'IN_PRODUCTION'
-          }
-        ]
-      };
+      const response = await axios.get(
+        `${API_BASE_URL}/api/email-enquiries/${enquiryId}`,
+        getHeaders()
+      );
+      return response.data;
     } catch (error) {
-      console.error('Error getting dashboard stats:', error);
+      console.error(`Error getting enquiry ${enquiryId}:`, error);
       throw error;
     }
   }
 
-  // Get all enquiries (mock for now)
   async getAllEnquiries(): Promise<EmailEnquiry[]> {
     try {
-      // TODO: Replace with actual API call
-      return [
-        {
-          id: 1,
-          enquiryId: 'ENQ-2024-001',
-          fromEmail: 'customer@abc-corp.com',
-          subject: 'Salmon Fillet Enquiry - Urgent',
-          emailBody: 'Hi, we need 500kg of fresh salmon fillets for next week delivery. Please provide quote.',
-          status: 'PROCESSING',
-          receivedAt: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
-          processedAt: new Date(Date.now() - 1 * 60 * 60 * 1000).toISOString(),
-          customer: {
-            id: 1,
-            email: 'customer@abc-corp.com',
-            contactPerson: 'John Smith',
-            companyName: 'ABC Corp',
-            phone: '+1-555-0123',
-            country: 'USA',
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString()
-          },
-          enquiryItems: [
-            {
-              id: 1,
-              customerSkuReference: 'ABC-SALMON-001',
-              productDescription: 'Fresh salmon fillets',
-              requestedQuantity: 500,
-              deliveryRequirement: 'Next week',
-              product: 'Salmon',
-              trimType: 'Fillet',
-              rmSpec: 'Fresh',
-              productType: 'Fresh',
-              packagingType: 'Box',
-              transportMode: 'Air',
-              unitPrice: 12.50,
-              totalPrice: 6250.00,
-              currency: 'USD',
-              mappingConfidence: 'HIGH',
-              aiMapped: true,
-              aiProcessingNotes: 'Successfully mapped from customer description',
-              processedAt: new Date().toISOString()
-            }
-          ],
-          aiProcessed: true,
-          processingNotes: 'AI successfully extracted 1 product requirement'
-        }
-      ];
+      const response = await axios.get(
+        `${API_BASE_URL}/api/email-enquiries`,
+        getHeaders()
+      );
+      return response.data;
     } catch (error) {
       console.error('Error getting enquiries:', error);
+      throw error;
+    }
+  }
+
+  // Delete enquiry
+  async deleteEnquiry(enquiryId: number): Promise<void> {
+    try {
+      await axios.delete(
+        `${API_BASE_URL}/api/email-enquiries/${enquiryId}`,
+        getHeaders()
+      );
+    } catch (error) {
+      console.error('Error deleting enquiry:', error);
       throw error;
     }
   }

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Box,
   Typography,
@@ -20,6 +21,16 @@ import {
   Alert,
   CircularProgress,
   Badge,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  DialogContentText,
+  IconButton,
+  FormControl,
+  Select,
+  MenuItem,
+  Tooltip,
 } from '@mui/material';
 import {
   Email as EmailIcon,
@@ -30,9 +41,13 @@ import {
   Schedule as PendingIcon,
   Cancel as RejectedIcon,
   Refresh as RefreshIcon,
+  Delete as DeleteIcon,
+  Visibility as VisibilityIcon,
 } from '@mui/icons-material';
 import { useAuth } from '../../context/AuthContext';
 import Header from '../layout/Header';
+import EmailService, { Email, EmailStats } from '../../services/EmailService';
+import EmailEnquiryService, { EnquiryItem } from '../../services/EmailEnquiryService';
 
 // Types for email-driven workflow
 interface EmailEnquiry {
@@ -59,19 +74,7 @@ interface Customer {
   country?: string;
 }
 
-interface EnquiryItem {
-  id: number;
-  customerSkuReference?: string;
-  productDescription: string;
-  requestedQuantity: number;
-  deliveryRequirement?: string;
-  product?: string;
-  trimType?: string;
-  unitPrice?: number;
-  totalPrice?: number;
-  mappingConfidence: 'HIGH' | 'MEDIUM' | 'LOW' | 'MANUAL_REVIEW';
-  aiMapped: boolean;
-}
+
 
 interface Quote {
   id: number;
@@ -119,6 +122,8 @@ interface DashboardStats {
   recentActivity: ActivityItem[];
 }
 
+// Email types for manual classification
+
 interface ActivityItem {
   id: number;
   type: 'ENQUIRY' | 'QUOTE' | 'ORDER';
@@ -130,6 +135,7 @@ interface ActivityItem {
 
 const EmailEnquiryDashboard: React.FC = () => {
   const { user, logout } = useAuth();
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -138,51 +144,46 @@ const EmailEnquiryDashboard: React.FC = () => {
   const [enquiries, setEnquiries] = useState<EmailEnquiry[]>([]);
   const [quotes, setQuotes] = useState<Quote[]>([]);
   const [orders, setOrders] = useState<Order[]>([]);
+  
+  // Email management state
+  const [emails, setEmails] = useState<Email[]>([]);
+  const [emailStats, setEmailStats] = useState<EmailStats | null>(null);
+  const [emailsLoading, setEmailsLoading] = useState(false);
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [stats, setStats] = useState<DashboardStats | null>(null);
+  
+  // Dialog states
+  const [selectedEnquiry, setSelectedEnquiry] = useState<EmailEnquiry | null>(null);
+  const [detailDialogOpen, setDetailDialogOpen] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [enquiryToDelete, setEnquiryToDelete] = useState<EmailEnquiry | null>(null);
 
   useEffect(() => {
     loadDashboardData();
+    // Load emails immediately when component mounts
+    loadEmails();
+    // Load enquiries as well
+    loadEnquiries();
   }, []);
 
   const loadDashboardData = async () => {
     setLoading(true);
     try {
-      // TODO: Implement API calls to load data
-      // Mock data for now
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      // Load real data from APIs
+      const [emailStatsResponse, dashboardStatsResponse] = await Promise.all([
+        EmailService.getEmailStats(),
+        EmailEnquiryService.getDashboardStats()
+      ]);
       
+      setEmailStats(emailStatsResponse);
+      
+      // Set stats with real numbers from API
       setStats({
-        totalEnquiries: 15,
-        pendingQuotes: 8,
-        activeOrders: 12,
-        totalCustomers: 25,
-        recentActivity: [
-          {
-            id: 1,
-            type: 'ENQUIRY',
-            title: 'New enquiry from ABC Corp',
-            description: 'Salmon fillet request - 500kg',
-            timestamp: '2 hours ago',
-            status: 'PROCESSING'
-          },
-          {
-            id: 2,
-            type: 'QUOTE',
-            title: 'Quote QUO-2024-001 sent',
-            description: 'Sent to customer@example.com',
-            timestamp: '4 hours ago',
-            status: 'SENT'
-          },
-          {
-            id: 3,
-            type: 'ORDER',
-            title: 'Order ORD-2024-001 confirmed',
-            description: 'Production started',
-            timestamp: '1 day ago',
-            status: 'IN_PRODUCTION'
-          }
-        ]
+        totalEnquiries: dashboardStatsResponse.totalEnquiries || 0,
+        pendingQuotes: dashboardStatsResponse.pendingQuotes || 0,
+        activeOrders: dashboardStatsResponse.activeOrders || 0,
+        totalCustomers: dashboardStatsResponse.totalCustomers || 0,
+        recentActivity: []
       });
       
     } catch (err) {
@@ -195,6 +196,97 @@ const EmailEnquiryDashboard: React.FC = () => {
 
   const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
     setActiveTab(newValue);
+    
+    // Load emails when switching to emails tab
+    if (newValue === 0) {
+      loadEmails();
+    }
+    // Load enquiries when switching to enquiries tab
+    if (newValue === 1) {
+      loadEnquiries();
+    }
+  };
+
+  // Load emails function
+  const loadEmails = async () => {
+    try {
+      setEmailsLoading(true);
+      const [emailsData, statsData] = await Promise.all([
+        EmailService.getAllEmails(),
+        EmailService.getEmailStats()
+      ]);
+      setEmails(emailsData);
+      setEmailStats(statsData);
+    } catch (error) {
+      console.error('Failed to load emails:', error);
+      setError('Failed to load emails');
+    } finally {
+      setEmailsLoading(false);
+    }
+  };
+
+  // Load enquiries function
+  const loadEnquiries = async () => {
+    try {
+      const enquiriesData = await EmailEnquiryService.getAllEnquiries();
+      setEnquiries(enquiriesData);
+    } catch (error) {
+      console.error('Failed to load enquiries:', error);
+      setError('Failed to load enquiries');
+    }
+  };
+
+  // Classify email function
+  const handleClassifyEmail = async (emailId: number, classification: 'INITIAL_ENQUIRY' | 'ORDER' | 'GENERAL') => {
+    try {
+      await EmailService.classifyEmail(emailId, classification);
+      // Reload emails after classification
+      loadEmails();
+    } catch (error) {
+      console.error('Failed to classify email:', error);
+      setError('Failed to classify email');
+    }
+  };
+
+  // View enquiry details
+  const handleViewDetails = (enquiry: EmailEnquiry) => {
+    setSelectedEnquiry(enquiry);
+    setDetailDialogOpen(true);
+  };
+
+  // Delete enquiry
+  const handleDeleteEnquiry = (enquiry: EmailEnquiry) => {
+    setEnquiryToDelete(enquiry);
+    setDeleteDialogOpen(true);
+  };
+
+  // Confirm delete
+  const confirmDeleteEnquiry = async () => {
+    if (!enquiryToDelete) return;
+
+    try {
+      // TODO: Implement delete API call
+      await EmailEnquiryService.deleteEnquiry(enquiryToDelete.id);
+      
+      // Remove from local state
+      setEnquiries(prev => prev.filter(e => e.id !== enquiryToDelete.id));
+      
+      // Close dialog
+      setDeleteDialogOpen(false);
+      setEnquiryToDelete(null);
+      
+      // Reload dashboard data
+      loadDashboardData();
+    } catch (error) {
+      console.error('Failed to delete enquiry:', error);
+      setError('Failed to delete enquiry');
+    }
+  };
+
+  // Cancel delete
+  const cancelDelete = () => {
+    setDeleteDialogOpen(false);
+    setEnquiryToDelete(null);
   };
 
   const getStatusColor = (status: string) => {
@@ -327,21 +419,28 @@ const EmailEnquiryDashboard: React.FC = () => {
             <Tabs value={activeTab} onChange={handleTabChange}>
               <Tab 
                 label={
-                  <Badge badgeContent={stats?.totalEnquiries} color="primary">
+                  <Badge badgeContent={emailStats?.needingClassification || 0} color="error">
+                    Emails
+                  </Badge>
+                } 
+              />
+              <Tab 
+                label={
+                  <Badge badgeContent={stats?.totalEnquiries || 0} color="primary">
                     Email Enquiries
                   </Badge>
                 } 
               />
               <Tab 
                 label={
-                  <Badge badgeContent={stats?.pendingQuotes} color="warning">
+                  <Badge badgeContent={stats?.pendingQuotes || 0} color="warning">
                     Quotes
                   </Badge>
                 } 
               />
               <Tab 
                 label={
-                  <Badge badgeContent={stats?.activeOrders} color="success">
+                  <Badge badgeContent={stats?.activeOrders || 0} color="success">
                     Orders
                   </Badge>
                 } 
@@ -353,15 +452,256 @@ const EmailEnquiryDashboard: React.FC = () => {
 
           {/* Tab Panels */}
           <Box p={3}>
-            {/* Enquiries Tab */}
+            {/* Emails Tab - Raw emails that need classification */}
             {activeTab === 0 && (
               <Box>
-                <Box display="flex" justifyContent="between" alignItems="center" mb={2}>
+                <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
+                  <Typography variant="h6">All Emails</Typography>
+                  <Button
+                    variant="outlined"
+                    startIcon={<RefreshIcon />}
+                    onClick={loadEmails}
+                  >
+                    Refresh
+                  </Button>
+                </Box>
+                
+                <Typography color="textSecondary" gutterBottom sx={{ mb: 3 }}>
+                  View and manually classify emails that need attention. Emails with failed AI classification can be manually marked as Enquiry or Order.
+                </Typography>
+                
+                {/* Email Statistics Cards */}
+                {emailStats && (
+                  <Grid container spacing={3} sx={{ mb: 4 }}>
+                    <Grid item xs={12} sm={6} md={2.4}>
+                      <Card sx={{ textAlign: 'center', py: 2 }}>
+                        <CardContent sx={{ pb: 2 }}>
+                          <Typography variant="h4" color="primary" sx={{ fontSize: '2rem', fontWeight: 'bold' }}>
+                            {emailStats.totalEmails}
+                          </Typography>
+                          <Typography variant="body2" color="textSecondary">
+                            Total Emails
+                          </Typography>
+                        </CardContent>
+                      </Card>
+                    </Grid>
+                    
+                    <Grid item xs={12} sm={6} md={2.4}>
+                      <Card sx={{ textAlign: 'center', py: 2 }}>
+                        <CardContent sx={{ pb: 2 }}>
+                          <Typography variant="h4" color="error" sx={{ fontSize: '2rem', fontWeight: 'bold' }}>
+                            {emailStats.needingClassification}
+                          </Typography>
+                          <Typography variant="body2" color="textSecondary">
+                            Need Classification
+                          </Typography>
+                        </CardContent>
+                      </Card>
+                    </Grid>
+                    
+                    <Grid item xs={12} sm={6} md={2.4}>
+                      <Card sx={{ textAlign: 'center', py: 2 }}>
+                        <CardContent sx={{ pb: 2 }}>
+                          <Typography variant="h4" color="info.main" sx={{ fontSize: '2rem', fontWeight: 'bold' }}>
+                            {emailStats.enquiries}
+                          </Typography>
+                          <Typography variant="body2" color="textSecondary">
+                            Enquiries
+                          </Typography>
+                        </CardContent>
+                      </Card>
+                    </Grid>
+                    
+                    <Grid item xs={12} sm={6} md={2.4}>
+                      <Card sx={{ textAlign: 'center', py: 2 }}>
+                        <CardContent sx={{ pb: 2 }}>
+                          <Typography variant="h4" color="success.main" sx={{ fontSize: '2rem', fontWeight: 'bold' }}>
+                            {emailStats.orders}
+                          </Typography>
+                          <Typography variant="body2" color="textSecondary">
+                            Orders
+                          </Typography>
+                        </CardContent>
+                      </Card>
+                    </Grid>
+                    
+                    <Grid item xs={12} sm={6} md={2.4}>
+                      <Card sx={{ textAlign: 'center', py: 2 }}>
+                        <CardContent sx={{ pb: 2 }}>
+                          <Typography variant="h4" color="text.secondary" sx={{ fontSize: '2rem', fontWeight: 'bold' }}>
+                            {emailStats.general}
+                          </Typography>
+                          <Typography variant="body2" color="textSecondary">
+                            General
+                          </Typography>
+                        </CardContent>
+                      </Card>
+                    </Grid>
+                  </Grid>
+                )}
+                
+                {emailsLoading ? (
+                  <Box display="flex" justifyContent="center" p={4}>
+                    <CircularProgress />
+                  </Box>
+                ) : emails.length === 0 ? (
+                <Alert severity="info" sx={{ mt: 2 }}>
+                    No emails available for classification.
+                </Alert>
+                ) : (
+                  <Box sx={{ mt: 2 }}>
+                    {/* Email Table Header */}
+                    <Box 
+                      sx={{ 
+                        display: 'grid', 
+                        gridTemplateColumns: '2fr 3fr 1.5fr 2fr 1.2fr 1.2fr',
+                        gap: 2,
+                        p: 2,
+                        backgroundColor: '#f5f5f5',
+                        borderRadius: 1,
+                        mb: 2,
+                        fontWeight: 'bold',
+                        alignItems: 'center'
+                      }}
+                    >
+                      <Typography variant="subtitle2" fontWeight="bold">From</Typography>
+                      <Typography variant="subtitle2" fontWeight="bold">Subject</Typography>
+                      <Typography variant="subtitle2" fontWeight="bold" sx={{ textAlign: 'center' }}>AI Classification</Typography>
+                      <Typography variant="subtitle2" fontWeight="bold" sx={{ textAlign: 'center' }}>Manual Classification</Typography>
+                      <Typography variant="subtitle2" fontWeight="bold" sx={{ textAlign: 'center' }}>Status</Typography>
+                      <Typography variant="subtitle2" fontWeight="bold" sx={{ textAlign: 'center' }}>Received</Typography>
+                    </Box>
+                    
+                    {emails.map((email) => (
+                      <Box 
+                        key={email.id}
+                        sx={{
+                          display: 'grid',
+                          gridTemplateColumns: '2fr 3fr 1.5fr 2fr 1.2fr 1.2fr',
+                          gap: 2,
+                          p: 2,
+                          bgcolor: 'white',
+                          borderRadius: 1,
+                          mb: 1,
+                          border: '1px solid',
+                          borderColor: 'grey.200',
+                          alignItems: 'center'
+                        }}
+                      >
+                        {/* From */}
+                        <Typography variant="body2" noWrap>
+                          {email.fromEmail}
+                        </Typography>
+                        
+                        {/* Subject */}
+                        <Box>
+                          <Typography variant="body2" fontWeight="medium" noWrap>
+                            {email.subject}
+                          </Typography>
+                          <Typography variant="caption" color="textSecondary">
+                            {email.emailBody ? email.emailBody.substring(0, 80) + '...' : ''}
+                          </Typography>
+                        </Box>
+                        
+                        {/* AI Classification */}
+                        <Box sx={{ display: 'flex', justifyContent: 'center' }}>
+                                <Chip 
+                            label={
+                              email.classification === 'INITIAL_ENQUIRY' ? 'Enquiry' :
+                              email.classification === 'ORDER' ? 'Order' :
+                              email.classification === 'GENERAL' ? 'General' :
+                              'Unclassified'
+                            } 
+                            color={
+                              email.classification === 'INITIAL_ENQUIRY' ? 'primary' :
+                              email.classification === 'ORDER' ? 'success' :
+                              email.classification === 'GENERAL' ? 'default' : 'warning'
+                            }
+                                  size="small"
+                            variant={email.classification ? 'filled' : 'outlined'}
+                          />
+                        </Box>
+                        
+                        {/* Manual Classification */}
+                        <Box sx={{ display: 'flex', justifyContent: 'center', width: '100%' }}>
+                          <Tooltip 
+                            title={
+                              email.effectiveClassification && email.effectiveClassification !== 'UNCLASSIFIED' 
+                                ? `Currently classified as: ${email.effectiveClassification === 'INITIAL_ENQUIRY' ? 'Enquiry' : email.effectiveClassification}`
+                                : "Select a classification for this email"
+                            }
+                          >
+                            <FormControl size="small" sx={{ width: '90%', maxWidth: 160 }}>
+                              <Select
+                                value={email.manualClassification || ''}
+                                onChange={(e) => {
+                                  const newClassification = e.target.value as 'INITIAL_ENQUIRY' | 'ORDER' | 'GENERAL';
+                                  // Prevent reclassifying to the same category
+                                  if (newClassification !== email.effectiveClassification) {
+                                    handleClassifyEmail(email.id, newClassification);
+                                  }
+                                }}
+                                displayEmpty
+                                sx={{ fontSize: '0.875rem' }}
+                              >
+                                <MenuItem value="">
+                                  <em>Select...</em>
+                                </MenuItem>
+                                <MenuItem 
+                                  value="INITIAL_ENQUIRY"
+                                  disabled={email.effectiveClassification === 'INITIAL_ENQUIRY'}
+                                >
+                                  Enquiry {email.effectiveClassification === 'INITIAL_ENQUIRY' && '(Current)'}
+                                </MenuItem>
+                                <MenuItem 
+                                  value="ORDER"
+                                  disabled={email.effectiveClassification === 'ORDER'}
+                                >
+                                  Order {email.effectiveClassification === 'ORDER' && '(Current)'}
+                                </MenuItem>
+                                <MenuItem 
+                                  value="GENERAL"
+                                  disabled={email.effectiveClassification === 'GENERAL'}
+                                >
+                                  General {email.effectiveClassification === 'GENERAL' && '(Current)'}
+                                </MenuItem>
+                              </Select>
+                            </FormControl>
+                          </Tooltip>
+                        </Box>
+                        
+                        {/* Status */}
+                        <Box sx={{ display: 'flex', justifyContent: 'center' }}>
+                          <Chip 
+                            label={email.processed ? 'Processed' : 'Pending'} 
+                            color={email.processed ? 'success' : 'warning'} 
+                            size="small"
+                          />
+                        </Box>
+                        
+                        {/* Received */}
+                        <Typography variant="body2" sx={{ textAlign: 'center' }}>
+                          {new Date(email.receivedAt).toLocaleDateString()}
+                        </Typography>
+                      </Box>
+                    ))}
+                  </Box>
+                )}
+              </Box>
+            )}
+
+            {/* Email Enquiries Tab */}
+            {activeTab === 1 && (
+              <Box>
+                <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
                   <Typography variant="h6">Email Enquiries</Typography>
                   <Button
                     variant="outlined"
                     startIcon={<RefreshIcon />}
-                    onClick={loadDashboardData}
+                    onClick={() => {
+                      loadDashboardData();
+                      loadEnquiries();
+                    }}
                   >
                     Refresh
                   </Button>
@@ -371,15 +711,110 @@ const EmailEnquiryDashboard: React.FC = () => {
                   Manage enquiries received via Outlook email integration with Zapier MCP
                 </Typography>
                 
-                <Alert severity="info" sx={{ mt: 2 }}>
-                  📨 Connect your Outlook email to automatically process enquiries via Zapier MCP.
-                  New emails will be parsed by AI and converted to structured enquiries.
-                </Alert>
-              </Box>
-            )}
+                {loading ? (
+                  <Box display="flex" justifyContent="center" p={4}>
+                    <CircularProgress />
+                  </Box>
+                ) : enquiries.length > 0 ? (
+                  <Box sx={{ mt: 3 }}>
+                    <Typography variant="h6" gutterBottom>
+                      Recent Enquiries
+                    </Typography>
+                    
+                    {/* Table Header */}
+                    <Box 
+                      sx={{
+                        display: 'grid',
+                        gridTemplateColumns: '2fr 2fr 3fr 1fr 1.5fr 1fr 1fr',
+                        gap: 2,
+                        p: 2,
+                        bgcolor: 'grey.100',
+                        borderRadius: 1,
+                        fontWeight: 'bold',
+                        mb: 1,
+                        alignItems: 'center'
+                      }}
+                    >
+                      <Typography variant="subtitle2" fontWeight="bold">Enquiry ID</Typography>
+                      <Typography variant="subtitle2" fontWeight="bold">From</Typography>
+                      <Typography variant="subtitle2" fontWeight="bold">Subject</Typography>
+                      <Typography variant="subtitle2" fontWeight="bold" sx={{ textAlign: 'center' }}>Status</Typography>
+                      <Typography variant="subtitle2" fontWeight="bold" sx={{ textAlign: 'center' }}>Received</Typography>
+                      <Typography variant="subtitle2" fontWeight="bold" sx={{ textAlign: 'center' }}>Actions</Typography>
+                      <Typography variant="subtitle2" fontWeight="bold" sx={{ textAlign: 'center' }}>Delete</Typography>
+                    </Box>
+                    
+                    {/* Table Rows */}
+                    {enquiries.map((enquiry) => (
+                      <Box 
+                        key={enquiry.id}
+                        sx={{
+                          display: 'grid',
+                          gridTemplateColumns: '2fr 2fr 3fr 1fr 1.5fr 1fr 1fr',
+                          gap: 2,
+                          p: 2,
+                          bgcolor: 'white',
+                          borderRadius: 1,
+                          mb: 1,
+                          border: '1px solid',
+                          borderColor: 'grey.200',
+                          alignItems: 'center'
+                        }}
+                      >
+                        <Typography variant="body2" fontWeight="medium">
+                          {enquiry.enquiryId}
+                                </Typography>
+                        <Typography variant="body2">
+                          {enquiry.fromEmail}
+                                  </Typography>
+                                <Typography variant="body2">
+                          {enquiry.subject}
+                                </Typography>
+                        <Box sx={{ display: 'flex', justifyContent: 'center' }}>
+                                <Chip 
+                            label={enquiry.status} 
+                            color={getStatusColor(enquiry.status)} 
+                                  size="small"
+                          />
+                        </Box>
+                                                <Typography variant="body2" sx={{ textAlign: 'center' }}>
+                          {new Date(enquiry.receivedAt).toLocaleDateString()}
+                        </Typography>
+                        <Box sx={{ display: 'flex', justifyContent: 'center' }}>
+                          <Button 
+                            size="small"
+                            color="error" 
+                            variant="contained"
+                            startIcon={<VisibilityIcon />}
+                            sx={{ minWidth: 'auto', px: 1 }}
+                            onClick={() => handleViewDetails(enquiry)}
+                          >
+                            View
+                          </Button>
+                        </Box>
+                        <Box sx={{ display: 'flex', justifyContent: 'center' }}>
+                          <IconButton 
+                            size="small" 
+                            color="error"
+                            onClick={() => handleDeleteEnquiry(enquiry)}
+                          >
+                            <DeleteIcon />
+                          </IconButton>
+                        </Box>
+                      </Box>
+                    ))}
+                    </Box>
+                ) : (
+                  <Alert severity="info" sx={{ mt: 2 }}>
+                    📨 No enquiries found. Connect your Outlook email to automatically process enquiries via Zapier MCP.
+                    New emails will be parsed by AI and converted to structured enquiries.
+                  </Alert>
+                )}
+                  </Box>
+                )}
 
             {/* Quotes Tab */}
-            {activeTab === 1 && (
+            {activeTab === 2 && (
               <Box>
                 <Typography variant="h6" gutterBottom>Quotes Management</Typography>
                 <Typography color="textSecondary" gutterBottom>
@@ -394,7 +829,7 @@ const EmailEnquiryDashboard: React.FC = () => {
             )}
 
             {/* Orders Tab */}
-            {activeTab === 2 && (
+            {activeTab === 3 && (
               <Box>
                 <Typography variant="h6" gutterBottom>Orders Management</Typography>
                 <Typography color="textSecondary" gutterBottom>
@@ -409,7 +844,7 @@ const EmailEnquiryDashboard: React.FC = () => {
             )}
 
             {/* Customers Tab */}
-            {activeTab === 3 && (
+            {activeTab === 4 && (
               <Box>
                 <Typography variant="h6" gutterBottom>Customer Management</Typography>
                 <Typography color="textSecondary" gutterBottom>
@@ -424,11 +859,11 @@ const EmailEnquiryDashboard: React.FC = () => {
             )}
 
             {/* Recent Activity Tab */}
-            {activeTab === 4 && (
+            {activeTab === 5 && (
               <Box>
                 <Typography variant="h6" gutterBottom>Recent Activity</Typography>
                 
-                {stats?.recentActivity && (
+                {stats?.recentActivity && stats.recentActivity.length > 0 ? (
                   <List>
                     {stats.recentActivity.map((activity) => (
                       <React.Fragment key={activity.id}>
@@ -461,33 +896,189 @@ const EmailEnquiryDashboard: React.FC = () => {
                       </React.Fragment>
                     ))}
                   </List>
+                ) : (
+                  <Alert severity="info" sx={{ mt: 2 }}>
+                    No recent activity available. Activity will appear here when emails are processed, quotes are generated, or orders are placed.
+                  </Alert>
                 )}
               </Box>
             )}
           </Box>
         </Paper>
 
-        {/* Quick Actions */}
-        <Box mt={4}>
-          <Typography variant="h6" gutterBottom>Quick Actions</Typography>
-          <Grid container spacing={2}>
-            <Grid item>
-              <Button variant="outlined" startIcon={<EmailIcon />}>
-                Test Email Processing
-              </Button>
-            </Grid>
-            <Grid item>
-              <Button variant="outlined" startIcon={<QuoteIcon />}>
-                Manual Quote Creation
-              </Button>
-            </Grid>
-            <Grid item>
-              <Button variant="outlined" startIcon={<RefreshIcon />}>
-                Sync with Zapier
-              </Button>
-            </Grid>
-          </Grid>
-        </Box>
+        {/* View Details Dialog */}
+      <Dialog 
+        open={detailDialogOpen} 
+          onClose={() => setDetailDialogOpen(false)}
+          maxWidth="md"
+        fullWidth
+      >
+        <DialogTitle>
+            Email Enquiry Details
+        </DialogTitle>
+          <DialogContent>
+          {selectedEnquiry && (
+              <Box>
+                  <Grid container spacing={2}>
+                  <Grid item xs={12} sm={6}>
+                    <Typography variant="subtitle2" color="textSecondary">Enquiry ID</Typography>
+                    <Typography variant="body1">{selectedEnquiry.enquiryId}</Typography>
+                    </Grid>
+                  <Grid item xs={12} sm={6}>
+                    <Typography variant="subtitle2" color="textSecondary">Status</Typography>
+                      <Chip 
+                        label={selectedEnquiry.status} 
+                        color={getStatusColor(selectedEnquiry.status)}
+                      size="small" 
+                      />
+                    </Grid>
+                  <Grid item xs={12} sm={6}>
+                    <Typography variant="subtitle2" color="textSecondary">From</Typography>
+                    <Typography variant="body1">{selectedEnquiry.fromEmail}</Typography>
+                  </Grid>
+                  <Grid item xs={12} sm={6}>
+                    <Typography variant="subtitle2" color="textSecondary">Received</Typography>
+                    <Typography variant="body1">{new Date(selectedEnquiry.receivedAt).toLocaleString()}</Typography>
+                  </Grid>
+                       <Grid item xs={12}>
+                    <Typography variant="subtitle2" color="textSecondary">Subject</Typography>
+                    <Typography variant="body1">{selectedEnquiry.subject}</Typography>
+                       </Grid>
+                       <Grid item xs={12}>
+                    <Typography variant="subtitle2" color="textSecondary">Customer</Typography>
+                    <Typography variant="body1">
+                      {selectedEnquiry.customer?.contactPerson || 'N/A'} ({selectedEnquiry.customer?.companyName || 'Unknown Company'})
+                             </Typography>
+                       </Grid>
+                <Grid item xs={12}>
+                    <Typography variant="subtitle2" color="textSecondary">Email Body</Typography>
+                    <Paper sx={{ p: 2, mt: 1, bgcolor: 'grey.50', maxHeight: 300, overflow: 'auto' }}>
+                      <Typography variant="body2" style={{ whiteSpace: 'pre-wrap' }}>
+                        {selectedEnquiry.emailBody}
+                  </Typography>
+                  </Paper>
+                </Grid>
+                  {selectedEnquiry.enquiryItems && selectedEnquiry.enquiryItems.length > 0 && (
+              <Grid item xs={12}>
+                      <Typography variant="subtitle2" color="textSecondary" gutterBottom>AI Parsed Fields</Typography>
+                      <Paper sx={{ mt: 1, overflow: 'hidden' }}>
+                        {/* Table Header */}
+                        <Box 
+                          sx={{
+                            display: 'grid',
+                            gridTemplateColumns: '1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr',
+                            gap: 1,
+                            p: 2,
+                            bgcolor: 'grey.100',
+                            fontWeight: 'bold'
+                          }}
+                        >
+                          <Typography variant="subtitle2" fontWeight="bold">Product Description</Typography>
+                          <Typography variant="subtitle2" fontWeight="bold">Product Type</Typography>
+                          <Typography variant="subtitle2" fontWeight="bold">Product Cut</Typography>
+                          <Typography variant="subtitle2" fontWeight="bold">RM Spec</Typography>
+                          <Typography variant="subtitle2" fontWeight="bold">Pack Material</Typography>
+                          <Typography variant="subtitle2" fontWeight="bold">Box Qty</Typography>
+                          <Typography variant="subtitle2" fontWeight="bold">Quantity</Typography>
+                          <Typography variant="subtitle2" fontWeight="bold">Confidence</Typography>
+                        </Box>
+                        
+                        {/* Table Rows */}
+                        {selectedEnquiry.enquiryItems.map((item, index) => (
+                          <Box 
+                            key={index}
+                            sx={{
+                              display: 'grid',
+                              gridTemplateColumns: '1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr',
+                              gap: 1,
+                              p: 2,
+                              bgcolor: index % 2 === 0 ? 'white' : 'grey.50',
+                              alignItems: 'center',
+                              borderTop: '1px solid',
+                              borderColor: 'grey.200'
+                            }}
+                          >
+                            <Typography variant="body2">
+                              {item.productDescription || 'N/A'}
+                              </Typography>
+                            <Typography variant="body2">
+                              {item.productType || 'N/A'}
+                              </Typography>
+                            <Typography variant="body2">
+                              {item.product || 'N/A'}
+                              </Typography>
+                            <Typography variant="body2">
+                              {item.rmSpec || 'N/A'}
+                              </Typography>
+                            <Typography variant="body2">
+                              {item.packMaterial || 'N/A'}
+                              </Typography>
+                            <Typography variant="body2">
+                              {item.boxQuantity || 'N/A'}
+                              </Typography>
+                        <Typography variant="body2">
+                              {item.requestedQuantity} kg
+                        </Typography>
+                            <Box sx={{ display: 'flex', justifyContent: 'center' }}>
+                              <Chip 
+                                label={item.mappingConfidence} 
+                                color={
+                                  item.mappingConfidence === 'HIGH' ? 'success' : 
+                                  item.mappingConfidence === 'MEDIUM' ? 'warning' : 'error'
+                                }
+                                size="small"
+                              />
+                  </Box>
+                          </Box>
+                        ))}
+                </Paper>
+              </Grid>
+                      )}
+                    </Grid>
+              </Box>
+          )}
+        </DialogContent>
+        <DialogActions>
+            <Button onClick={() => setDetailDialogOpen(false)}>Close</Button>
+            <Button 
+              variant="contained" 
+              color="primary"
+              onClick={() => {
+                // Navigate to quote generation
+                navigate(`/quote-generation/${selectedEnquiry?.enquiryId}`);
+              }}
+            >
+            Generate Quote
+          </Button>
+          </DialogActions>
+        </Dialog>
+
+        {/* Delete Confirmation Dialog */}
+        <Dialog
+          open={deleteDialogOpen}
+          onClose={cancelDelete}
+          aria-labelledby="delete-dialog-title"
+        >
+          <DialogTitle id="delete-dialog-title">
+            Confirm Delete Enquiry
+          </DialogTitle>
+          <DialogContent>
+            <DialogContentText>
+              Are you sure you want to delete the enquiry "{enquiryToDelete?.enquiryId}" from {enquiryToDelete?.fromEmail}?
+              <br/><br/>
+              <strong>This action cannot be undone.</strong>
+            </DialogContentText>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={cancelDelete} color="primary">
+              Cancel
+            </Button>
+            <Button onClick={confirmDeleteEnquiry} color="error" variant="contained">
+              Delete
+          </Button>
+        </DialogActions>
+      </Dialog>
+
       </Container>
     </Box>
   );
