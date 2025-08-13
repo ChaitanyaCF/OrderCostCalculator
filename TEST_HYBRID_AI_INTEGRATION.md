@@ -98,7 +98,7 @@ grep -A 10 "OpenAI Configuration" src/main/resources/application.properties
 **Should show:**
 ```
 # OpenAI Configuration (GPT-4o Mini for cost-effective AI processing)
-openai.api.key=sk-proj--8e1c3SUe...
+openai.api.key=${OPENAI_API_KEY}
 openai.model=gpt-4o-mini
 ai.hybrid.enabled=true
 ai.openai.fallback.enabled=true
