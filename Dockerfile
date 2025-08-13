@@ -20,19 +20,23 @@ COPY backend/src ./src
 RUN mvn clean package -DskipTests
 
 # Runtime stage
-FROM eclipse-temurin:17-jre-alpine
+FROM eclipse-temurin:17-jre
 
 # Install nginx and other dependencies
-RUN apk add --no-cache nginx tzdata wget
+RUN apt-get update && apt-get install -y \
+    nginx \
+    wget \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
 
 # Set timezone
 ENV TZ=UTC
 
 # Create app user
-RUN addgroup -S appgroup && adduser -S appuser -G appgroup
+RUN groupadd -r appgroup && useradd -r -g appgroup appuser
 
 # Create directories
-RUN mkdir -p /app/backend /app/frontend /var/log/nginx /var/lib/nginx /run/nginx
+RUN mkdir -p /app/backend /app/frontend /var/log/nginx /var/lib/nginx /run/nginx /app/logs
 
 # Copy backend jar
 COPY --from=backend-build /app/backend/target/*.jar /app/backend/app.jar
@@ -45,27 +49,56 @@ COPY frontend/nginx.conf /etc/nginx/nginx.conf
 
 # Set permissions
 RUN chown -R appuser:appgroup /app && \
-    chown -R nginx:nginx /app/frontend && \
-    chown -R nginx:nginx /var/log/nginx && \
-    chown -R nginx:nginx /var/lib/nginx && \
-    chown -R nginx:nginx /run/nginx
+    chown -R www-data:www-data /app/frontend && \
+    chown -R www-data:www-data /var/log/nginx && \
+    chown -R www-data:www-data /var/lib/nginx && \
+    chown -R www-data:www-data /run/nginx
 
 # Create startup script
 RUN cat > /app/start.sh << 'EOF'
 #!/bin/sh
 set -e
 
-echo "Starting Order Cost Calculator..."
+echo "🚀 Starting Order Cost Calculator with Enhanced Features..."
+echo "=================================================="
+
+# Environment validation
+echo "🔧 Environment Configuration:"
+echo "   Database: ${SPRING_DATASOURCE_URL:-Default H2}"
+echo "   OpenAI API: ${OPENAI_API_KEY:+Configured}"
+echo "   JVM Options: $JAVA_OPTS"
+
+# Validate required environment variables
+if [ -z "$OPENAI_API_KEY" ]; then
+    echo "⚠️  WARNING: OPENAI_API_KEY not set. AI processing will be disabled."
+else
+    echo "✅ OpenAI API key configured (starts with ${OPENAI_API_KEY%${OPENAI_API_KEY#????}}...)"
+fi
+
+# Create logs directory
+mkdir -p /app/logs
 
 # Start nginx in background
-echo "Starting nginx..."
+echo "🌐 Starting nginx frontend server..."
 nginx -g "daemon off;" &
 NGINX_PID=$!
 
-# Start Spring Boot application
-echo "Starting backend..."
+# Wait a moment for nginx to start
+sleep 2
+
+# Start Spring Boot application with conversation progression
+echo "📧 Starting backend with conversation progression logic..."
+echo "   - Enhanced email processing"
+echo "   - Conversation threading"
+echo "   - AI-powered classification"
+echo "   - Status progression tracking"
+echo "=================================================="
+
 cd /app/backend
-exec java $JAVA_OPTS -jar app.jar
+exec java $JAVA_OPTS \
+    -Dspring.profiles.active=docker \
+    -Dlogging.level.com.procost.api.controller.ZapierDataController=INFO \
+    -jar app.jar
 EOF
 
 RUN chmod +x /app/start.sh && chown appuser:appgroup /app/start.sh

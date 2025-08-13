@@ -1,10 +1,10 @@
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: backend-data-pvc
+  name: order-cost-calculator-data
   namespace: order-cost-calculator
   labels:
-    app: backend
+    app: order-cost-calculator
     component: storage
 spec:
   accessModes:
@@ -17,10 +17,10 @@ spec:
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: backend-logs-pvc
+  name: order-cost-calculator-logs
   namespace: order-cost-calculator
   labels:
-    app: backend
+    app: order-cost-calculator
     component: logs
 spec:
   accessModes:

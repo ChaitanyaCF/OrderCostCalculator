@@ -88,11 +88,13 @@ echo "=================================================="
 echo -e "${GREEN}🚀 Starting Maven Spring Boot application...${NC}"
 echo "Command: mvn spring-boot:run -Dmaven.multiModuleProjectDirectory=\"$BACKEND_DIR\""
 
-# Set OpenAI API key (you'll need to replace this with your actual key)
+# Check OpenAI API key
 if [ -z "$OPENAI_API_KEY" ]; then
-    echo -e "${YELLOW}⚠️  OpenAI API key not set. AI processing will be disabled.${NC}"
+    echo -e "${YELLOW}⚠️  WARNING: OpenAI API key not set. AI processing will be disabled.${NC}"
     echo -e "${YELLOW}   To enable AI processing, set OPENAI_API_KEY environment variable${NC}"
-    export OPENAI_API_KEY=""
+    echo -e "${YELLOW}   Example: export OPENAI_API_KEY='your-api-key'${NC}"
+else
+    echo -e "${GREEN}✅ OpenAI API key is configured (${OPENAI_API_KEY:0:20}...)${NC}"
 fi
 
 echo "=================================================="

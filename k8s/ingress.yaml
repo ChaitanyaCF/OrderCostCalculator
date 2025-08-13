@@ -32,13 +32,13 @@ spec:
         pathType: Prefix
         backend:
           service:
-            name: backend-service
+            name: order-cost-calculator-service
             port:
               number: 8082
       - path: /
         pathType: Prefix
         backend:
           service:
-            name: frontend-service
+            name: order-cost-calculator-service
             port:
               number: 3000

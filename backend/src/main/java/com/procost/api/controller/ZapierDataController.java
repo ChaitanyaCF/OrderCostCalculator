@@ -6,6 +6,8 @@ import com.procost.api.repository.EmailEnquiryRepository;
 import com.procost.api.repository.EmailRepository;
 import com.procost.api.service.EmailContentProcessor;
 import com.procost.api.service.HybridEmailProcessor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -24,6 +26,8 @@ import java.util.regex.Pattern;
 @RequestMapping("/api/zapier")
 @CrossOrigin(originPatterns = "*", allowCredentials = "false")
 public class ZapierDataController {
+    
+    private static final Logger logger = LoggerFactory.getLogger(ZapierDataController.class);
     
     @Autowired
     private CustomerRepository customerRepository;
@@ -46,9 +50,16 @@ public class ZapierDataController {
      */
     @PostMapping("/receive-email")
     public ResponseEntity<Map<String, Object>> receiveEmail(@RequestBody Map<String, Object> emailData) {
+        logger.info("🔥 ===== ZAPIER EMAIL RECEIVED =====");
+        logger.info("📧 Raw email data keys: {}", emailData.keySet());
+        
         String fromEmail = (String) emailData.get("fromEmail");
         String subject = (String) emailData.get("subject");
         String rawEmailBody = (String) emailData.get("emailBody");
+        
+        logger.info("📨 FROM: {}", fromEmail);
+        logger.info("📝 SUBJECT: {}", subject);
+        logger.info("📄 BODY LENGTH: {} chars", rawEmailBody != null ? rawEmailBody.length() : 0);
         
         // Process email content (HTML to text if needed)
         String emailBody = emailContentProcessor.processEmailContent(rawEmailBody);
@@ -58,16 +69,32 @@ public class ZapierDataController {
         String conversationId = (String) emailData.get("conversationId");
         String receivedAt = (String) emailData.get("receivedAt");
         
+        logger.info("🔗 THREADING INFO:");
+        logger.info("   messageId: {}", messageId);
+        logger.info("   threadId: {}", threadId);
+        logger.info("   conversationId: {}", conversationId);
+        logger.info("   inReplyTo: {}", inReplyTo);
+        logger.info("   receivedAt: {}", receivedAt);
+        
         // Generate or extract thread identifier
         String emailThreadId = generateEmailThreadId(messageId, threadId, conversationId, inReplyTo, subject);
+        logger.info("🎯 GENERATED THREAD ID: {}", emailThreadId);
         
         // Determine email type and stage
         EmailType emailType = classifyEmailType(subject, emailBody);
         EmailStage emailStage = determineEmailStage(subject, emailBody, emailType);
         
+        logger.info("🤖 AI CLASSIFICATION:");
+        logger.info("   emailType: {}", emailType);
+        logger.info("   emailStage: {}", emailStage);
+        
         // Extract any reference numbers from previous emails
         String quoteReference = extractQuoteReference(emailBody, subject);
         String orderReference = extractOrderReference(emailBody, subject);
+        
+        logger.info("🔍 REFERENCE EXTRACTION:");
+        logger.info("   quoteReference: {}", quoteReference);
+        logger.info("   orderReference: {}", orderReference);
         
         // Create or find customer using enhanced AI extraction
         Customer customer = hybridEmailProcessor.extractCustomerInfo(fromEmail, emailBody, subject);
@@ -83,17 +110,59 @@ public class ZapierDataController {
         email.setReceivedAt(parseReceivedAt(receivedAt));
         email = emailRepository.save(email);
         
-        // Create EmailEnquiry if this is a new enquiry
+        // Handle conversation progression using existing thread infrastructure
         EmailEnquiry enquiry = null;
-        if (emailStage == EmailStage.INITIAL_ENQUIRY) {
+        
+        logger.info("🔍 CONVERSATION PROGRESSION CHECK:");
+        logger.info("   Looking for existing enquiries with threadId: {}", emailThreadId);
+        
+        // First, check if this is part of an existing conversation using conversationId
+        List<EmailEnquiry> existingEnquiries = emailEnquiryRepository
+            .findByOriginalEmailIdOrderByReceivedAtDesc(emailThreadId);
+        
+        logger.info("   Found {} existing enquiries for this thread", existingEnquiries.size());
+        
+        if (!existingEnquiries.isEmpty()) {
+            // This is a continuation of an existing conversation
+            enquiry = existingEnquiries.get(0); // Get the most recent enquiry in this thread
+            logger.info("✅ EXISTING CONVERSATION FOUND:");
+            logger.info("   EnquiryId: {}", enquiry.getEnquiryId());
+            logger.info("   Current Status: {}", enquiry.getStatus());
+            logger.info("   Previous emails in thread: {}", existingEnquiries.size());
+            
+            // Update the enquiry based on the email stage
+            logger.info("🔄 UPDATING ENQUIRY PROGRESSION: {} -> {}", enquiry.getStatus(), emailStage);
+            enquiry = updateEnquiryProgression(enquiry, emailStage, emailBody, subject);
+            
+            // Link this email to the existing enquiry
+            email.setEnquiryId(enquiry.getEnquiryId());
+            email.setProcessed(true);
+            logger.info("🔗 Email linked to existing enquiry: {}", enquiry.getEnquiryId());
+            
+        } else if (emailStage == EmailStage.INITIAL_ENQUIRY) {
+            // This is a brand new conversation
+            logger.info("🆕 CREATING NEW CONVERSATION:");
+            logger.info("   ThreadId: {}", emailThreadId);
+            logger.info("   EmailStage: {}", emailStage);
+            
             enquiry = createEmailEnquiry(customer, subject, emailBody, emailThreadId, receivedAt,
                                              messageId, threadId, conversationId, inReplyTo);
             if (enquiry != null) {
                 email.setEnquiryId(enquiry.getEnquiryId());
                 email.setProcessed(true);
-                emailRepository.save(email);
+                logger.info("✅ NEW ENQUIRY CREATED: {}", enquiry.getEnquiryId());
+            } else {
+                logger.error("❌ FAILED TO CREATE NEW ENQUIRY");
             }
+        } else {
+            // Email stage suggests this should be linked but no thread found
+            logger.warn("⚠️  ORPHANED EMAIL DETECTED:");
+            logger.warn("   EmailStage '{}' suggests continuation but no existing thread found", emailStage);
+            logger.warn("   ThreadId: {}", emailThreadId);
+            logger.warn("   This email will be stored but not processed as enquiry");
         }
+        
+        emailRepository.save(email);
         
         Map<String, Object> response = new HashMap<>();
         response.put("success", true);
@@ -129,6 +198,14 @@ public class ZapierDataController {
         
         // Next suggested action
         response.put("suggestedAction", getSuggestedAction(emailStage, emailType));
+        
+        logger.info("📤 WEBHOOK RESPONSE:");
+        logger.info("   success: {}", response.get("success"));
+        logger.info("   enquiryId: {}", response.get("enquiryId"));
+        logger.info("   enquiryStatus: {}", response.get("enquiryStatus"));
+        logger.info("   emailStage: {}", response.get("emailStage"));
+        logger.info("   suggestedAction: {}", response.get("suggestedAction"));
+        logger.info("🔥 ===== END EMAIL PROCESSING =====");
         
         return ResponseEntity.ok(response);
     }
@@ -181,9 +258,59 @@ public class ZapierDataController {
     }
     
     /**
-     * Determine the stage in the customer journey
+     * Determine the stage in the customer journey - Enhanced for conversation progression
      */
     private EmailStage determineEmailStage(String subject, String emailBody, EmailType emailType) {
+        String text = (subject + " " + emailBody).toLowerCase();
+        
+        // Enhanced conversation progression detection
+        
+        // ORDER PLACEMENT/CONFIRMATION patterns
+        if (text.contains("proceed with") || text.contains("place order") || text.contains("place the order") ||
+            text.contains("go ahead") || text.contains("move forward") || text.contains("confirm order")) {
+            return EmailStage.ORDER_PLACEMENT;
+        }
+        
+        // ORDER CONFIRMED patterns  
+        if (text.contains("order confirmed") || text.contains("order placed") || 
+            text.contains("order number") || text.contains("purchase order")) {
+            return EmailStage.ORDER_CONFIRMED;
+        }
+        
+        // QUOTE ACCEPTANCE patterns
+        if ((text.contains("quote") || text.contains("pricing")) && 
+            (text.contains("accept") || text.contains("approve") || text.contains("good") || 
+             text.contains("looks good") || text.contains("acceptable") || text.contains("agree"))) {
+            return EmailStage.ORDER_PLACEMENT;
+        }
+        
+        // QUOTE SENT patterns (when we send quotes)
+        if (text.contains("quote attached") || text.contains("pricing below") || 
+            text.contains("quotation") || (text.contains("quote") && text.contains("price"))) {
+            return EmailStage.QUOTE_SENT;
+        }
+        
+        // ENQUIRY CLOSED/REJECTED patterns
+        if (text.contains("cancel") || text.contains("not interested") || text.contains("too expensive") ||
+            text.contains("reject") || text.contains("decline") || text.contains("no longer need")) {
+            return EmailStage.ENQUIRY_CLOSED;
+        }
+        
+        // FOLLOW UP patterns (questions, modifications, clarifications)
+        if (text.contains("question") || text.contains("clarification") || text.contains("modify") ||
+            text.contains("change") || text.contains("update") || text.contains("when") ||
+            text.contains("how") || text.contains("what about") || text.contains("also")) {
+            return EmailStage.FOLLOW_UP;
+        }
+        
+        // INITIAL ENQUIRY patterns (first contact)
+        if (text.contains("need") || text.contains("require") || text.contains("looking for") ||
+            text.contains("inquiry") || text.contains("enquiry") || text.contains("quote request") ||
+            text.contains("price") || text.contains("cost") || text.contains("interested in")) {
+            return EmailStage.INITIAL_ENQUIRY;
+        }
+        
+        // Fallback to EmailType-based classification
         switch (emailType) {
             case ENQUIRY:
                 return EmailStage.INITIAL_ENQUIRY;
@@ -303,7 +430,79 @@ public class ZapierDataController {
         return emailEnquiryRepository.save(enquiry);
     }
     
-
+    /**
+     * Update enquiry progression based on conversation flow
+     */
+    private EmailEnquiry updateEnquiryProgression(EmailEnquiry enquiry, EmailStage emailStage, 
+                                                String emailBody, String subject) {
+        String timestamp = LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME);
+        String currentNotes = enquiry.getProcessingNotes() != null ? enquiry.getProcessingNotes() : "";
+        
+        logger.info("🔄 ===== ENQUIRY PROGRESSION UPDATE =====");
+        logger.info("📋 EnquiryId: {}", enquiry.getEnquiryId());
+        logger.info("📊 Current Status: {}", enquiry.getStatus());
+        logger.info("🎯 EmailStage: {}", emailStage);
+        logger.info("📝 Subject: {}", subject);
+        
+        switch (emailStage) {
+            case ORDER_PLACEMENT:
+            case ORDER_CONFIRMED:
+                // Customer has confirmed/placed an order
+                logger.info("🛒 CONVERTING TO ORDER: {} -> CONVERTED", enquiry.getStatus());
+                enquiry.setStatus(EnquiryStatus.CONVERTED);
+                enquiry.setProcessingNotes(currentNotes + "\n[" + timestamp + "] ORDER CONFIRMED: " + subject);
+                logger.info("✅ Enquiry {} converted to order", enquiry.getEnquiryId());
+                break;
+                
+            case QUOTE_SENT:
+                // Quote has been sent to customer
+                if (enquiry.getStatus() == EnquiryStatus.RECEIVED || enquiry.getStatus() == EnquiryStatus.PROCESSING) {
+                    enquiry.setStatus(EnquiryStatus.QUOTED);
+                }
+                enquiry.setProcessingNotes(currentNotes + "\n[" + timestamp + "] QUOTE SENT: " + subject);
+                logger.info("Quote sent for enquiry {}", enquiry.getEnquiryId());
+                break;
+                
+            case FOLLOW_UP:
+                // Keep existing status, just add conversation history
+                enquiry.setProcessingNotes(currentNotes + "\n[" + timestamp + "] FOLLOW-UP: " + subject);
+                break;
+                
+            case ENQUIRY_CLOSED:
+                // Enquiry has been closed/cancelled
+                enquiry.setStatus(EnquiryStatus.CANCELLED);
+                enquiry.setProcessingNotes(currentNotes + "\n[" + timestamp + "] ENQUIRY CLOSED: " + subject);
+                break;
+                
+            default:
+                // Add to conversation history without changing status
+                enquiry.setProcessingNotes(currentNotes + "\n[" + timestamp + "] EMAIL (" + emailStage + "): " + subject);
+        }
+        
+        // Extract any additional requirements from the follow-up email
+        if (emailStage != EmailStage.INITIAL_ENQUIRY) {
+            List<EnquiryItem> additionalItems = hybridEmailProcessor.parseProductRequirements(emailBody);
+            if (!additionalItems.isEmpty()) {
+                logger.info("Found {} additional items in follow-up email", additionalItems.size());
+                // Link new items to the existing enquiry
+                for (EnquiryItem item : additionalItems) {
+                    item.setEmailEnquiry(enquiry);
+                    enquiry.getEnquiryItems().add(item);
+                }
+                enquiry.setProcessingNotes(currentNotes + "\n[" + timestamp + "] ADDITIONAL ITEMS EXTRACTED: " + additionalItems.size() + " items");
+            }
+        }
+        
+        EmailEnquiry savedEnquiry = emailEnquiryRepository.save(enquiry);
+        
+        logger.info("💾 ENQUIRY PROGRESSION COMPLETED:");
+        logger.info("   EnquiryId: {}", savedEnquiry.getEnquiryId());
+        logger.info("   Final Status: {}", savedEnquiry.getStatus());
+        logger.info("   Items Count: {}", savedEnquiry.getEnquiryItems().size());
+        logger.info("🔥 ===== END PROGRESSION UPDATE =====");
+        
+        return savedEnquiry;
+    }
     
     /**
      * Extract product type aligned with database enums - NO HARDCODED DEFAULTS

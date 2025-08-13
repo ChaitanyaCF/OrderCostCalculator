@@ -566,7 +566,7 @@ const EmailEnquiryDashboard: React.FC = () => {
                     >
                       <Typography variant="subtitle2" fontWeight="bold">From</Typography>
                       <Typography variant="subtitle2" fontWeight="bold">Subject</Typography>
-                      <Typography variant="subtitle2" fontWeight="bold" sx={{ textAlign: 'center' }}>AI Classification</Typography>
+                      <Typography variant="subtitle2" fontWeight="bold" sx={{ textAlign: 'center' }}>Current Classification</Typography>
                       <Typography variant="subtitle2" fontWeight="bold" sx={{ textAlign: 'center' }}>Manual Classification</Typography>
                       <Typography variant="subtitle2" fontWeight="bold" sx={{ textAlign: 'center' }}>Status</Typography>
                       <Typography variant="subtitle2" fontWeight="bold" sx={{ textAlign: 'center' }}>Received</Typography>
@@ -607,18 +607,18 @@ const EmailEnquiryDashboard: React.FC = () => {
                         <Box sx={{ display: 'flex', justifyContent: 'center' }}>
                                 <Chip 
                             label={
-                              email.classification === 'INITIAL_ENQUIRY' ? 'Enquiry' :
-                              email.classification === 'ORDER' ? 'Order' :
-                              email.classification === 'GENERAL' ? 'General' :
+                              email.effectiveClassification === 'INITIAL_ENQUIRY' ? 'Enquiry' :
+                              email.effectiveClassification === 'ORDER' ? 'Order' :
+                              email.effectiveClassification === 'GENERAL' ? 'General' :
                               'Unclassified'
                             } 
                             color={
-                              email.classification === 'INITIAL_ENQUIRY' ? 'primary' :
-                              email.classification === 'ORDER' ? 'success' :
-                              email.classification === 'GENERAL' ? 'default' : 'warning'
+                              email.effectiveClassification === 'INITIAL_ENQUIRY' ? 'primary' :
+                              email.effectiveClassification === 'ORDER' ? 'success' :
+                              email.effectiveClassification === 'GENERAL' ? 'default' : 'warning'
                             }
                                   size="small"
-                            variant={email.classification ? 'filled' : 'outlined'}
+                            variant={email.effectiveClassification ? 'filled' : 'outlined'}
                           />
                         </Box>
                         
@@ -779,18 +779,18 @@ const EmailEnquiryDashboard: React.FC = () => {
                         </Box>
                                                 <Typography variant="body2" sx={{ textAlign: 'center' }}>
                           {new Date(enquiry.receivedAt).toLocaleDateString()}
-                        </Typography>
+                                </Typography>
                         <Box sx={{ display: 'flex', justifyContent: 'center' }}>
-                          <Button 
-                            size="small"
+                                <Button 
+                                  size="small"
                             color="error" 
                             variant="contained"
                             startIcon={<VisibilityIcon />}
                             sx={{ minWidth: 'auto', px: 1 }}
                             onClick={() => handleViewDetails(enquiry)}
-                          >
-                            View
-                          </Button>
+                                >
+                                  View
+                                </Button>
                         </Box>
                         <Box sx={{ display: 'flex', justifyContent: 'center' }}>
                           <IconButton 
