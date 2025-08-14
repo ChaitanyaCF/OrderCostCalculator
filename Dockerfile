@@ -35,8 +35,8 @@ ENV TZ=UTC
 # Create app user
 RUN groupadd -r appgroup && useradd -r -g appgroup appuser
 
-# Create directories
-RUN mkdir -p /app/backend /app/frontend /var/log/nginx /var/lib/nginx /run/nginx /app/logs
+# Create directories (FIXED: Added /app/data)
+RUN mkdir -p /app/backend /app/frontend /var/log/nginx /var/lib/nginx /run/nginx /app/logs /app/data
 
 # Copy backend jar
 COPY --from=backend-build /app/backend/target/*.jar /app/backend/app.jar
@@ -75,8 +75,9 @@ else
     echo "✅ OpenAI API key configured (starts with ${OPENAI_API_KEY%${OPENAI_API_KEY#????}}...)"
 fi
 
-# Create logs directory
-mkdir -p /app/logs
+# Create directories with proper permissions (FIXED: Added data directory)
+mkdir -p /app/logs /app/data
+chmod 755 /app/data
 
 # Start nginx in background
 echo "🌐 Starting nginx frontend server..."
