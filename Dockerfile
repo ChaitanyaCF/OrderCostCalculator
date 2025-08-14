@@ -32,8 +32,8 @@ RUN apt-get update && apt-get install -y \
 # Set timezone
 ENV TZ=UTC
 
-# Create app user
-RUN groupadd -r appgroup && useradd -r -g appgroup appuser
+# Create app user with specific UID/GID for volume permissions
+RUN groupadd -g 1000 appgroup && useradd -u 1000 -g appgroup -m appuser
 
 # Create directories (FIXED: Added /app/data)
 RUN mkdir -p /app/backend /app/frontend /var/log/nginx /var/lib/nginx /run/nginx /app/logs /app/data
@@ -47,8 +47,9 @@ COPY --from=frontend-build /app/frontend/build /app/frontend
 # Copy nginx config
 COPY frontend/nginx.conf /etc/nginx/nginx.conf
 
-# Set permissions
+# Set permissions (FIXED: Ensure appuser owns /app/data)
 RUN chown -R appuser:appgroup /app && \
+    chmod -R 755 /app/data && \
     chown -R www-data:www-data /app/frontend && \
     chown -R www-data:www-data /var/log/nginx && \
     chown -R www-data:www-data /var/lib/nginx && \
