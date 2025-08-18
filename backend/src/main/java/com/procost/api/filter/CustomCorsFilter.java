@@ -9,6 +9,8 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.util.Arrays;
+import java.util.List;
 
 @Component
 public class CustomCorsFilter extends OncePerRequestFilter {
@@ -20,11 +22,28 @@ public class CustomCorsFilter extends OncePerRequestFilter {
         // Get origin from request header
         String origin = request.getHeader("Origin");
         
-        // Allow both localhost:3000 and localhost:3001
-        if (origin != null && (origin.equals("http://localhost:3000") || origin.equals("http://localhost:3001"))) {
-            response.setHeader("Access-Control-Allow-Origin", origin);
+        // Get allowed origins from environment variable or use defaults
+        String allowedOriginsEnv = System.getenv("ALLOWED_ORIGINS");
+        List<String> allowedOrigins;
+        
+        if (allowedOriginsEnv != null && !allowedOriginsEnv.trim().isEmpty()) {
+            // Parse comma-separated origins from environment
+            allowedOrigins = Arrays.asList(allowedOriginsEnv.split(","));
+            // Trim whitespace from each origin
+            allowedOrigins = allowedOrigins.stream()
+                .map(String::trim)
+                .collect(java.util.stream.Collectors.toList());
         } else {
-            response.setHeader("Access-Control-Allow-Origin", "http://localhost:3001");
+            // Default to localhost for development
+            allowedOrigins = Arrays.asList("http://localhost:3000", "http://localhost:3001");
+        }
+        
+        // Check if origin is allowed
+        if (origin != null && allowedOrigins.contains(origin.trim())) {
+            response.setHeader("Access-Control-Allow-Origin", origin);
+        } else if (!allowedOrigins.isEmpty()) {
+            // Fallback to first allowed origin
+            response.setHeader("Access-Control-Allow-Origin", allowedOrigins.get(0));
         }
         
         response.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, PATCH, OPTIONS");

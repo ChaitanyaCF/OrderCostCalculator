@@ -44,8 +44,11 @@ COPY --from=backend-build /app/backend/target/*.jar /app/backend/app.jar
 # Copy frontend build
 COPY --from=frontend-build /app/frontend/build /app/frontend
 
-# Copy nginx config
-COPY frontend/nginx.conf /etc/nginx/nginx.conf
+# Install envsubst for nginx template processing
+RUN apt-get update && apt-get install -y gettext-base && rm -rf /var/lib/apt/lists/*
+
+# Copy nginx template
+COPY frontend/nginx.conf.template /etc/nginx/nginx.conf.template
 
 # Set permissions (FIXED: Ensure appuser owns /app/data)
 RUN chown -R appuser:appgroup /app && \
@@ -63,10 +66,18 @@ set -e
 echo "🚀 Starting Order Cost Calculator with Enhanced Features..."
 echo "=================================================="
 
+# Set default environment variables
+export BACKEND_URL=${BACKEND_URL:-localhost:8082}
+export REACT_APP_API_URL=${REACT_APP_API_URL:-http://localhost:8082}
+export ALLOWED_ORIGINS=${ALLOWED_ORIGINS:-http://localhost:3000,http://localhost:3001}
+
 # Environment validation
 echo "🔧 Environment Configuration:"
 echo "   Database: ${SPRING_DATASOURCE_URL:-Default H2}"
 echo "   OpenAI API: ${OPENAI_API_KEY:+Configured}"
+echo "   Backend URL: $BACKEND_URL"
+echo "   Frontend API URL: $REACT_APP_API_URL"
+echo "   Allowed Origins: $ALLOWED_ORIGINS"
 echo "   JVM Options: $JAVA_OPTS"
 
 # Validate required environment variables
@@ -79,6 +90,10 @@ fi
 # Create directories with proper permissions (FIXED: Added data directory)
 mkdir -p /app/logs /app/data
 chmod 755 /app/data
+
+# Process nginx template with environment variables
+echo "🔧 Configuring nginx with backend URL: $BACKEND_URL"
+envsubst '${BACKEND_URL}' < /etc/nginx/nginx.conf.template > /etc/nginx/nginx.conf
 
 # Start nginx in background
 echo "🌐 Starting nginx frontend server..."

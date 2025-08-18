@@ -39,6 +39,11 @@ services:
       - SPRING_JPA_SHOW_SQL=false
       - SPRING_JPA_HIBERNATE_DDL_AUTO=update
       
+      # URL Configuration (configurable for production deployment)
+      - BACKEND_URL=${BACKEND_URL:-localhost:8082}
+      - REACT_APP_API_URL=${REACT_APP_API_URL:-http://localhost:8082}
+      - ALLOWED_ORIGINS=${ALLOWED_ORIGINS:-http://localhost:3000,http://localhost:3001}
+      
     healthcheck:
       test: |
         wget --no-verbose --tries=1 --spider http://localhost:3000/ &&

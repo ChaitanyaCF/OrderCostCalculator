@@ -77,6 +77,20 @@ spec:
           value: "INFO"
         - name: LOGGING_LEVEL_COM_PROCOST_API_SERVICE_OPENAISERVICE
           value: "INFO"
+        
+        # URL Configuration (configurable for production deployment)
+        - name: BACKEND_URL
+          value: "localhost:8082"  # Within same pod
+        - name: REACT_APP_API_URL
+          valueFrom:
+            configMapKeyRef:
+              name: order-cost-calculator-config
+              key: frontend.api.url
+        - name: ALLOWED_ORIGINS
+          valueFrom:
+            configMapKeyRef:
+              name: order-cost-calculator-config
+              key: cors.allowed.origins
         volumeMounts:
         - name: data-storage
           mountPath: /app/data

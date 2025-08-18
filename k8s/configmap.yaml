@@ -81,6 +81,10 @@ data:
     ai.max.daily.requests=2000
     ai.cost.alert.threshold=10.00
     ai.usage.tracking.enabled=true
+  
+  # URL Configuration (Update these for your production environment)
+  frontend.api.url: "https://your-domain.com"  # Change to your production domain
+  cors.allowed.origins: "https://your-domain.com,http://localhost:3000,http://localhost:3001"  # Change to your production domain
     
   # Frontend configuration
   nginx.conf: |
