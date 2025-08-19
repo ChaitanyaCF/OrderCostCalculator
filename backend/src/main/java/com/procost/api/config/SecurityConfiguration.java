@@ -64,7 +64,8 @@ public class SecurityConfiguration {
                 .antMatchers("/api/auth/**").permitAll()
                 .antMatchers("/auth/**").permitAll()
                 .antMatchers("/api/test/**").permitAll()
-                .antMatchers("/h2-console/**").permitAll()
+                .antMatchers("/api/health").permitAll() // Health check endpoint
+                // .antMatchers("/h2-console/**").permitAll() // H2 console disabled (using PostgreSQL)
                 .antMatchers("/webhooks/**").permitAll()
                 .antMatchers("/api/zapier/**").permitAll()
                 // Whitelist static assets to avoid 401 errors

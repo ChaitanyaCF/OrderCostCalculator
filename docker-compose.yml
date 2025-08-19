@@ -15,9 +15,13 @@ services:
       - ./docker-data:/app/data
       - ./logs:/app/logs
     environment:
-      # Database Configuration
+      # Database Configuration - PostgreSQL
       - SPRING_PROFILES_ACTIVE=docker
-      - SPRING_DATASOURCE_URL=jdbc:h2:file:/app/data/procostdb_new
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://faas-dev.caaywughmqtk.ap-south-1.rds.amazonaws.com:5432/procostdb_new
+      - SPRING_DATASOURCE_DRIVER_CLASS_NAME=org.postgresql.Driver
+      - SPRING_DATASOURCE_USERNAME=captainfresh
+      - SPRING_DATASOURCE_PASSWORD=C4pt41nFre5h1001
+      - SPRING_JPA_DATABASE_PLATFORM=org.hibernate.dialect.PostgreSQLDialect
       - SPRING_SQL_INIT_MODE=never
       - SPRING_JPA_DEFER_DATASOURCE_INITIALIZATION=false
       
