@@ -22,7 +22,7 @@ import java.util.Optional;
 
 @RestController
 @RequestMapping("/auth")
-@CrossOrigin(origins = {"http://localhost:3000", "http://localhost:3001"})
+@CrossOrigin(originPatterns = "*", allowCredentials = "true")
 public class AuthController {
     
     private static final Logger logger = LoggerFactory.getLogger(AuthController.class);
