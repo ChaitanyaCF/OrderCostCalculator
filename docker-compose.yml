@@ -6,6 +6,8 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+      args:
+        - REACT_APP_API_URL=${REACT_APP_API_URL:-http://13.203.41.13:8082}
     image: order-cost-calculator:latest
     container_name: order-cost-calculator
     ports:
