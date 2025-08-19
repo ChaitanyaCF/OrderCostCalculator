@@ -56,10 +56,23 @@ public class ZapierDataController {
         String fromEmail = (String) emailData.get("fromEmail");
         String subject = (String) emailData.get("subject");
         String rawEmailBody = (String) emailData.get("emailBody");
+        String toEmails = (String) emailData.get("toEmail");
         
         logger.info("📨 FROM: {}", fromEmail);
         logger.info("📝 SUBJECT: {}", subject);
         logger.info("📄 BODY LENGTH: {} chars", rawEmailBody != null ? rawEmailBody.length() : 0);
+        
+        // Handle multiple recipients
+        if (toEmails != null) {
+            String[] recipients = parseMultipleRecipients(toEmails);
+            logger.info("📧 TO: {} recipient(s)", recipients.length);
+            for (int i = 0; i < recipients.length; i++) {
+                logger.info("   [{}] {}", i + 1, recipients[i]);
+            }
+            if (hasMultipleRecipients(toEmails)) {
+                logger.info("🔄 Multiple recipients detected - processing as single enquiry with primary recipient: {}", getPrimaryRecipient(toEmails));
+            }
+        }
         
         // Process email content (HTML to text if needed)
         String emailBody = emailContentProcessor.processEmailContent(rawEmailBody);
@@ -731,6 +744,37 @@ public class ZapierDataController {
             // If parsing fails, use current time
         }
         return LocalDateTime.now();
+    }
+    
+    /**
+     * Parse multiple recipients from comma-separated string
+     * Example: "odd.medhus@cftsolutions.eu,henriktp@skagerakprocessing.dk,jens@skagerakprocessing.dk"
+     */
+    private String[] parseMultipleRecipients(String recipients) {
+        if (recipients == null || recipients.trim().isEmpty()) {
+            return new String[0];
+        }
+        
+        return recipients.split(",")
+                .stream()
+                .map(String::trim)
+                .filter(email -> !email.isEmpty())
+                .toArray(String[]::new);
+    }
+    
+    /**
+     * Get primary recipient (first email in the list)
+     */
+    private String getPrimaryRecipient(String recipients) {
+        String[] recipientArray = parseMultipleRecipients(recipients);
+        return recipientArray.length > 0 ? recipientArray[0] : null;
+    }
+    
+    /**
+     * Check if email is sent to multiple recipients
+     */
+    private boolean hasMultipleRecipients(String recipients) {
+        return parseMultipleRecipients(recipients).length > 1;
     }
     
     // Enums for classification

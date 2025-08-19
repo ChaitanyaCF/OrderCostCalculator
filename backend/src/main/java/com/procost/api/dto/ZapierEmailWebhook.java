@@ -11,8 +11,7 @@ public class ZapierEmailWebhook {
     @NotBlank(message = "From email is required")
     private String fromEmail;
     
-    @Email
-    private String toEmail;
+    private String toEmail;  // Can contain multiple emails separated by commas
     
     @NotBlank(message = "Subject is required")
     @Size(max = 500)
