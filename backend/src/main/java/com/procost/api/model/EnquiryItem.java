@@ -19,7 +19,7 @@ public class EnquiryItem {
     @Size(max = 255)
     private String customerSkuReference;
     
-    @Lob
+    @Column(columnDefinition = "TEXT")
     private String productDescription;
     
     private Integer requestedQuantity;
@@ -27,7 +27,7 @@ public class EnquiryItem {
     @Size(max = 255)
     private String deliveryRequirement;
     
-    @Lob
+    @Column(columnDefinition = "TEXT")
     private String specialInstructions;
     
     // Mapped to our system
@@ -65,8 +65,7 @@ public class EnquiryItem {
     @Size(max = 20)
     private String skinOption;
     
-    @Column(name = "special_requirements")
-    @Lob
+    @Column(name = "special_requirements", columnDefinition = "TEXT")
     private String specialRequirements;
     
     // Calculated pricing
@@ -87,7 +86,7 @@ public class EnquiryItem {
     @Size(max = 20)
     private String mappingConfidence; // HIGH, MEDIUM, LOW, MANUAL_REVIEW
     
-    @Lob
+    @Column(columnDefinition = "TEXT")
     private String aiProcessingNotes;
     
     private LocalDateTime processedAt;

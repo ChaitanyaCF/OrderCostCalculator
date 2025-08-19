@@ -25,7 +25,7 @@ public class EmailEnquiry {
     @Size(max = 500)
     private String subject;
     
-    @Lob
+    @Column(columnDefinition = "TEXT")
     private String emailBody;
     
     @Size(max = 255)
@@ -48,7 +48,7 @@ public class EmailEnquiry {
     @Column(nullable = false)
     private Boolean aiProcessed = false;
     
-    @Lob
+    @Column(columnDefinition = "TEXT")
     private String processingNotes;
     
     private LocalDateTime processedAt;

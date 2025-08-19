@@ -53,7 +53,7 @@ public class Quote {
     @Size(max = 255)
     private String deliveryTerms;
     
-    @Lob
+    @Column(columnDefinition = "TEXT")
     private String specialInstructions;
     
     // One-to-one relationship with Order when quote is accepted

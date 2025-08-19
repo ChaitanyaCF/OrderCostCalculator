@@ -17,8 +17,7 @@ public class Email {
     @Column(name = "subject")
     private String subject;
     
-    @Lob
-    @Column(name = "email_body")
+    @Column(name = "email_body", columnDefinition = "TEXT")
     private String emailBody;
     
     @Column(name = "received_at", nullable = false)

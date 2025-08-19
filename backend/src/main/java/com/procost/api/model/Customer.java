@@ -35,7 +35,7 @@ public class Customer {
     @Size(max = 100)
     private String country;
     
-    @Lob
+    @Column(columnDefinition = "TEXT")
     private String emailSignature;
     
     @Size(max = 50)

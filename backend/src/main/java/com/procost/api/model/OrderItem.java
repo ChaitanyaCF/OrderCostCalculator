@@ -18,7 +18,7 @@ public class OrderItem {
     @JoinColumn(name = "quote_item_id")
     private QuoteItem quoteItem;
     
-    @Lob
+    @Column(columnDefinition = "TEXT")
     private String itemDescription;
     
     private Integer quantity;
@@ -31,7 +31,7 @@ public class OrderItem {
     @Enumerated(EnumType.STRING)
     private OrderItemStatus status = OrderItemStatus.PENDING; // PENDING, IN_PRODUCTION, COMPLETED
     
-    @Lob
+    @Column(columnDefinition = "TEXT")
     private String productionNotes;
     
     // Constructors

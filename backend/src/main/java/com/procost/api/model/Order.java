@@ -44,10 +44,10 @@ public class Order {
     private LocalDateTime expectedDelivery;
     private LocalDateTime deliveredAt;
     
-    @Lob
+    @Column(columnDefinition = "TEXT")
     private String shippingAddress;
     
-    @Lob
+    @Column(columnDefinition = "TEXT")
     private String specialInstructions;
     
     // Constructors

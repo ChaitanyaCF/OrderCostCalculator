@@ -18,7 +18,7 @@ public class QuoteItem {
     @JoinColumn(name = "enquiry_item_id")
     private EnquiryItem enquiryItem;
     
-    @Lob
+    @Column(columnDefinition = "TEXT")
     private String itemDescription;
     
     private Integer quantity;
@@ -28,7 +28,7 @@ public class QuoteItem {
     @Size(max = 3)
     private String currency = "USD";
     
-    @Lob
+    @Column(columnDefinition = "TEXT")
     private String notes;
     
     // Constructors
