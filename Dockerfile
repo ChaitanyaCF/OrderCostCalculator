@@ -1,5 +1,5 @@
-# Full-stack Dockerfile for Order Cost Calculator
-# This builds both frontend and backend in a single container
+# Nginx + Spring Boot Dockerfile for Order Cost Calculator
+# Frontend served by Nginx on port 3000, Backend on port 8082
 
 FROM node:18-alpine AS frontend-build
 
@@ -19,7 +19,7 @@ RUN mvn dependency:go-offline -B
 COPY backend/src ./src
 RUN mvn clean package -DskipTests
 
-# Runtime stage
+# Runtime stage - Nginx + Spring Boot
 FROM eclipse-temurin:17-jre
 
 # Install nginx and other dependencies
@@ -27,55 +27,56 @@ RUN apt-get update && apt-get install -y \
     nginx \
     wget \
     curl \
+    gettext-base \
     && rm -rf /var/lib/apt/lists/*
 
 # Set timezone
 ENV TZ=UTC
 
 # Create app user with specific UID/GID for volume permissions
-RUN groupadd -g 1000 appgroup && useradd -u 1000 -g appgroup -m appuser
+RUN groupadd -g 1001 appgroup 2>/dev/null || true && \
+    useradd -u 1001 -g 1001 -m appuser 2>/dev/null || true
 
-# Create directories (FIXED: Added /app/data)
+# Create directories
 RUN mkdir -p /app/backend /app/frontend /var/log/nginx /var/lib/nginx /run/nginx /app/logs /app/data
 
 # Copy backend jar
 COPY --from=backend-build /app/backend/target/*.jar /app/backend/app.jar
 
-# Copy frontend build
+# Copy frontend build to nginx directory
 COPY --from=frontend-build /app/frontend/build /app/frontend
 
-# Install envsubst for nginx template processing
-RUN apt-get update && apt-get install -y gettext-base && rm -rf /var/lib/apt/lists/*
+# Copy nginx configuration
+COPY frontend/nginx.conf /etc/nginx/nginx.conf
 
-# Copy nginx template
-COPY frontend/nginx.conf.template /etc/nginx/nginx.conf.template
+# Copy existing database (if available)
+COPY docker-data/ /app/data/
 
-# Set permissions (FIXED: Ensure appuser owns /app/data)
-RUN chown -R appuser:appgroup /app && \
+# Set permissions
+RUN chown -R 1001:1001 /app && \
     chmod -R 755 /app/data && \
-    chown -R www-data:www-data /app/frontend && \
-    chown -R www-data:www-data /var/log/nginx && \
-    chown -R www-data:www-data /var/lib/nginx && \
-    chown -R www-data:www-data /run/nginx
+    mkdir -p /var/lib/nginx/body /var/lib/nginx/fastcgi /var/lib/nginx/proxy /var/lib/nginx/scgi /var/lib/nginx/uwsgi && \
+    chown -R 1001:1001 /var/log/nginx && \
+    chown -R 1001:1001 /var/lib/nginx && \
+    chown -R 1001:1001 /run/nginx && \
+    chmod -R 755 /var/lib/nginx
 
 # Create startup script
 RUN cat > /app/start.sh << 'EOF'
 #!/bin/sh
 set -e
 
-echo "🚀 Starting Order Cost Calculator with Enhanced Features..."
+echo "🚀 Starting Order Cost Calculator (Nginx + Spring Boot)..."
 echo "=================================================="
 
-# Set default environment variables
-export BACKEND_URL=${BACKEND_URL:-localhost:8082}
-export REACT_APP_API_URL=${REACT_APP_API_URL:-http://localhost:8082}
-export ALLOWED_ORIGINS=${ALLOWED_ORIGINS:-http://localhost:3000,http://localhost:3001}
+# Set default environment variables (configurable URLs preserved)
+export REACT_APP_API_URL=${REACT_APP_API_URL:-}
+export ALLOWED_ORIGINS=${ALLOWED_ORIGINS:-http://localhost:3000,http://localhost:3001,http://localhost:8082}
 
 # Environment validation
 echo "🔧 Environment Configuration:"
 echo "   Database: ${SPRING_DATASOURCE_URL:-Default H2}"
 echo "   OpenAI API: ${OPENAI_API_KEY:+Configured}"
-echo "   Backend URL: $BACKEND_URL"
 echo "   Frontend API URL: $REACT_APP_API_URL"
 echo "   Allowed Origins: $ALLOWED_ORIGINS"
 echo "   JVM Options: $JAVA_OPTS"
@@ -87,52 +88,52 @@ else
     echo "✅ OpenAI API key configured (starts with ${OPENAI_API_KEY%${OPENAI_API_KEY#????}}...)"
 fi
 
-# Create directories with proper permissions (FIXED: Added data directory)
+# Create directories with proper permissions
 mkdir -p /app/logs /app/data
 chmod 755 /app/data
 
-# Process nginx template with environment variables
-echo "🔧 Configuring nginx with backend URL: $BACKEND_URL"
-envsubst '${BACKEND_URL}' < /etc/nginx/nginx.conf.template > /etc/nginx/nginx.conf
-
 # Start nginx in background
-echo "🌐 Starting nginx frontend server..."
+echo "🌐 Starting Nginx frontend server..."
 nginx -g "daemon off;" &
 NGINX_PID=$!
 
 # Wait a moment for nginx to start
 sleep 2
 
-# Start Spring Boot application with conversation progression
-echo "📧 Starting backend with conversation progression logic..."
-echo "   - Enhanced email processing"
-echo "   - Conversation threading"
-echo "   - AI-powered classification"
-echo "   - Status progression tracking"
+# Start Spring Boot backend
+echo "🌐 Starting Spring Boot backend..."
+echo "   - Frontend: http://localhost:3000/"
+echo "   - Backend API: http://localhost:8082/api/"
+echo "   - Auth: http://localhost:8082/auth/"
+echo "   - Health: http://localhost:8082/api/health"
 echo "=================================================="
 
 cd /app/backend
-exec java $JAVA_OPTS \
+java $JAVA_OPTS \
     -Dspring.profiles.active=docker \
     -Dlogging.level.com.procost.api.controller.ZapierDataController=INFO \
-    -jar app.jar
+    -jar app.jar &
+BACKEND_PID=$!
+
+# Wait for both processes
+wait $NGINX_PID $BACKEND_PID
 EOF
 
-RUN chmod +x /app/start.sh && chown appuser:appgroup /app/start.sh
+RUN chmod +x /app/start.sh && chown 1001:1001 /app/start.sh
 
 # Switch to app user
 USER appuser
 
-# Expose ports
+# Expose both ports
 EXPOSE 3000 8082
 
-# Health check
+# Health check for both services
 HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
   CMD wget --no-verbose --tries=1 --spider http://localhost:3000/health && \
-      wget --no-verbose --tries=1 --spider http://localhost:8082/actuator/health || exit 1
+      wget --no-verbose --tries=1 --spider http://localhost:8082/api/health || exit 1
 
 # Environment variables
 ENV JAVA_OPTS="-XX:+UseContainerSupport -XX:MaxRAMPercentage=60.0 -XX:+UseG1GC -XX:+UseStringDeduplication"
 
-# Start both services
+# Start the application
 CMD ["/app/start.sh"]

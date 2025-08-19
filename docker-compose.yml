@@ -42,7 +42,7 @@ services:
       # URL Configuration (configurable for production deployment)
       - BACKEND_URL=${BACKEND_URL:-localhost:8082}
       - REACT_APP_API_URL=${REACT_APP_API_URL:-http://localhost:8082}
-      - ALLOWED_ORIGINS=${ALLOWED_ORIGINS:-http://localhost:3000,http://localhost:3001}
+      - ALLOWED_ORIGINS=${ALLOWED_ORIGINS:-http://localhost:3000,http://localhost:3001,http://localhost:8082}
       
     healthcheck:
       test: |
