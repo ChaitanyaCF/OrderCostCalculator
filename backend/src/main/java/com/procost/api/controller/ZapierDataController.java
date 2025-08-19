@@ -21,6 +21,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.Arrays;
 
 @RestController
 @RequestMapping("/api/zapier")
@@ -755,11 +756,17 @@ public class ZapierDataController {
             return new String[0];
         }
         
-        return recipients.split(",")
-                .stream()
-                .map(String::trim)
-                .filter(email -> !email.isEmpty())
-                .toArray(String[]::new);
+        String[] rawRecipients = recipients.split(",");
+        List<String> cleanRecipients = new ArrayList<>();
+        
+        for (String email : rawRecipients) {
+            String trimmedEmail = email.trim();
+            if (!trimmedEmail.isEmpty()) {
+                cleanRecipients.add(trimmedEmail);
+            }
+        }
+        
+        return cleanRecipients.toArray(new String[0]);
     }
     
     /**
