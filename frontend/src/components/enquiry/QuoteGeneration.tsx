@@ -89,6 +89,18 @@ interface SKUFormData {
   
   // Optional charges
   optionalCharges: Array<{chargeValue: number}>;
+  
+  // Individual toggle states for each SKU
+  palletChargeEnabled: boolean;
+  terminalChargeEnabled: boolean;
+  receptionFeeEnabled: boolean;
+  dispatchFeeEnabled: boolean;
+  environmentalFeeEnabled: boolean;
+  electricityFeeEnabled: boolean;
+  prodABEnabled: boolean;
+  descalingEnabled: boolean;
+  portionSkinOnEnabled: boolean;
+  portionSkinOffEnabled: boolean;
 }
 
 const QuoteGeneration: React.FC<QuoteGenerationProps> = () => {
@@ -107,22 +119,10 @@ const QuoteGeneration: React.FC<QuoteGenerationProps> = () => {
   const [trimTypes, setTrimTypes] = useState<string[]>([]);
   const [rmSpecs, setRmSpecs] = useState<string[]>([]);
   
-  // Toggle states for each SKU (exactly like NewEnquiry)
-  const [palletChargeEnabled, setPalletChargeEnabled] = useState(true);
-  const [terminalChargeEnabled, setTerminalChargeEnabled] = useState(true);
-  const [receptionFeeEnabled, setReceptionFeeEnabled] = useState(false);
-  
   // Email content and UI states
   const [emailContentVisible, setEmailContentVisible] = useState(false);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [itemToDelete, setItemToDelete] = useState<string | null>(null);
-  const [dispatchFeeEnabled, setDispatchFeeEnabled] = useState(false);
-  const [environmentalFeeEnabled, setEnvironmentalFeeEnabled] = useState(false);
-  const [electricityFeeEnabled, setElectricityFeeEnabled] = useState(false);
-  const [prodABEnabled, setProdABEnabled] = useState(false);
-  const [descalingEnabled, setDescalingEnabled] = useState(false);
-  const [portionSkinOnEnabled, setPortionSkinOnEnabled] = useState(false);
-  const [portionSkinOffEnabled, setPortionSkinOffEnabled] = useState(false);
 
   // Load enquiry data
   useEffect(() => {
@@ -192,7 +192,19 @@ const QuoteGeneration: React.FC<QuoteGenerationProps> = () => {
           environmentalFee: 0,
           electricityFee: 0,
           
-          optionalCharges: [] as Array<{chargeValue: number}>
+          optionalCharges: [] as Array<{chargeValue: number}>,
+          
+          // Individual toggle states for each SKU (default values)
+          palletChargeEnabled: true,
+          terminalChargeEnabled: true,
+          receptionFeeEnabled: false,
+          dispatchFeeEnabled: false,
+          environmentalFeeEnabled: false,
+          electricityFeeEnabled: false,
+          prodABEnabled: false,
+          descalingEnabled: false,
+          portionSkinOnEnabled: false,
+          portionSkinOffEnabled: false
         }));
 
         setSkuForms(initialForms);
@@ -421,8 +433,8 @@ const QuoteGeneration: React.FC<QuoteGenerationProps> = () => {
         const filletingRate = Number(form.filletingRate || 0);
         
         // Additional charges (per kg or fixed)
-        const palletCharge = palletChargeEnabled ? Number(form.palletCharge || 0) : 0;
-        const terminalCharge = terminalChargeEnabled ? Number(form.terminalCharge || 0) : 0;
+        const palletCharge = form.palletChargeEnabled ? Number(form.palletCharge || 0) : 0;
+        const terminalCharge = form.terminalChargeEnabled ? Number(form.terminalCharge || 0) : 0;
         
         // Calculate unit price (sum of all rates per kg)
         const baseUnitPrice = filletingRate + packagingRate + freezingRate + palletCharge + terminalCharge;
@@ -439,12 +451,12 @@ const QuoteGeneration: React.FC<QuoteGenerationProps> = () => {
         let perKgFees = 0;
         if (form.productType === 'Frozen') {
           // Add reception fee if enabled (per kg)
-          if (receptionFeeEnabled && selectedFactory?.receptionFee) {
+          if (form.receptionFeeEnabled && selectedFactory?.receptionFee) {
             perKgFees += Number(selectedFactory.receptionFee) * Number(form.quantity);
           }
           
           // Add dispatch fee if enabled (per kg)
-          if (dispatchFeeEnabled && selectedFactory?.dispatchFee) {
+          if (form.dispatchFeeEnabled && selectedFactory?.dispatchFee) {
             perKgFees += Number(selectedFactory.dispatchFee) * Number(form.quantity);
           }
         }
@@ -456,13 +468,13 @@ const QuoteGeneration: React.FC<QuoteGenerationProps> = () => {
         let percentageFees = 0;
         if (form.productType === 'Frozen') {
           // Add environmental fee if enabled (percentage of subtotal)
-          if (environmentalFeeEnabled && selectedFactory?.environmentalFeePercentage) {
+          if (form.environmentalFeeEnabled && selectedFactory?.environmentalFeePercentage) {
             const envFeePercent = Number(selectedFactory.environmentalFeePercentage) / 100;
             percentageFees += subtotal * envFeePercent;
           }
           
           // Add electricity fee if enabled (percentage of subtotal)
-          if (electricityFeeEnabled && selectedFactory?.electricityFeePercentage) {
+          if (form.electricityFeeEnabled && selectedFactory?.electricityFeePercentage) {
             const elecFeePercent = Number(selectedFactory.electricityFeePercentage) / 100;
             percentageFees += subtotal * elecFeePercent;
           }
@@ -471,11 +483,11 @@ const QuoteGeneration: React.FC<QuoteGenerationProps> = () => {
         const total = subtotal + percentageFees;
         
         // Calculate individual percentage fees for display
-        const environmentalFeeAmount = form.productType === 'Frozen' && environmentalFeeEnabled && selectedFactory?.environmentalFeePercentage 
+        const environmentalFeeAmount = form.productType === 'Frozen' && form.environmentalFeeEnabled && selectedFactory?.environmentalFeePercentage 
           ? subtotal * (Number(selectedFactory.environmentalFeePercentage) / 100)
           : 0;
         
-        const electricityFeeAmount = form.productType === 'Frozen' && electricityFeeEnabled && selectedFactory?.electricityFeePercentage 
+        const electricityFeeAmount = form.productType === 'Frozen' && form.electricityFeeEnabled && selectedFactory?.electricityFeePercentage 
           ? subtotal * (Number(selectedFactory.electricityFeePercentage) / 100)
           : 0;
         
@@ -483,8 +495,8 @@ const QuoteGeneration: React.FC<QuoteGenerationProps> = () => {
           totalCost: total,
           environmentalFee: environmentalFeeAmount,
           electricityFee: electricityFeeAmount,
-          receptionFee: receptionFeeEnabled && selectedFactory?.receptionFee ? Number(selectedFactory.receptionFee) : 0,
-          dispatchFee: dispatchFeeEnabled && selectedFactory?.dispatchFee ? Number(selectedFactory.dispatchFee) : 0
+          receptionFee: form.receptionFeeEnabled && selectedFactory?.receptionFee ? Number(selectedFactory.receptionFee) : 0,
+          dispatchFee: form.dispatchFeeEnabled && selectedFactory?.dispatchFee ? Number(selectedFactory.dispatchFee) : 0
         };
       };
 
@@ -492,12 +504,7 @@ const QuoteGeneration: React.FC<QuoteGenerationProps> = () => {
       return { ...form, ...calculatedValues };
     }));
   }, [
-    palletChargeEnabled,
-    terminalChargeEnabled,
-    receptionFeeEnabled,
-    dispatchFeeEnabled,
-    environmentalFeeEnabled,
-    electricityFeeEnabled,
+    skuForms.map(f => `${f.quantity}-${f.filletingRate}-${f.packagingRate}-${f.freezingRate}-${f.palletCharge}-${f.terminalCharge}-${f.palletChargeEnabled}-${f.terminalChargeEnabled}-${f.receptionFeeEnabled}-${f.dispatchFeeEnabled}-${f.environmentalFeeEnabled}-${f.electricityFeeEnabled}`).join(','),
     selectedFactory
   ]);
 
@@ -612,8 +619,8 @@ const QuoteGeneration: React.FC<QuoteGenerationProps> = () => {
           const freezingRate = updatedForm.productType === 'Frozen' ? Number(updatedForm.freezingRate || 0) : 0;
           const filletingRate = Number(updatedForm.filletingRate || 0);
           
-          const palletCharge = palletChargeEnabled ? Number(updatedForm.palletCharge || 0) : 0;
-          const terminalCharge = terminalChargeEnabled ? Number(updatedForm.terminalCharge || 0) : 0;
+          const palletCharge = updatedForm.palletChargeEnabled ? Number(updatedForm.palletCharge || 0) : 0;
+          const terminalCharge = updatedForm.terminalChargeEnabled ? Number(updatedForm.terminalCharge || 0) : 0;
           
           const baseUnitPrice = filletingRate + packagingRate + freezingRate + palletCharge + terminalCharge;
           const optionalTotal = updatedForm.optionalCharges.reduce((sum, charge) => sum + (charge.chargeValue || 0), 0);
@@ -621,10 +628,10 @@ const QuoteGeneration: React.FC<QuoteGenerationProps> = () => {
           
           let perKgFees = 0;
           if (updatedForm.productType === 'Frozen') {
-            if (receptionFeeEnabled && selectedFactory?.receptionFee) {
+            if (updatedForm.receptionFeeEnabled && selectedFactory?.receptionFee) {
               perKgFees += Number(selectedFactory.receptionFee) * Number(updatedForm.quantity);
             }
-            if (dispatchFeeEnabled && selectedFactory?.dispatchFee) {
+            if (updatedForm.dispatchFeeEnabled && selectedFactory?.dispatchFee) {
               perKgFees += Number(selectedFactory.dispatchFee) * Number(updatedForm.quantity);
             }
           }
@@ -632,10 +639,10 @@ const QuoteGeneration: React.FC<QuoteGenerationProps> = () => {
           const subtotal = baseCost + perKgFees;
           let percentageFees = 0;
           if (updatedForm.productType === 'Frozen') {
-            if (environmentalFeeEnabled && selectedFactory?.environmentalFeePercentage) {
+            if (updatedForm.environmentalFeeEnabled && selectedFactory?.environmentalFeePercentage) {
               percentageFees += subtotal * (Number(selectedFactory.environmentalFeePercentage) / 100);
             }
-            if (electricityFeeEnabled && selectedFactory?.electricityFeePercentage) {
+            if (updatedForm.electricityFeeEnabled && selectedFactory?.electricityFeePercentage) {
               percentageFees += subtotal * (Number(selectedFactory.electricityFeePercentage) / 100);
             }
           }
@@ -646,14 +653,14 @@ const QuoteGeneration: React.FC<QuoteGenerationProps> = () => {
         updatedForm.totalCost = calculateTotalCost();
         
         // Also update individual fee amounts for display
-        updatedForm.environmentalFee = updatedForm.productType === 'Frozen' && environmentalFeeEnabled && selectedFactory?.environmentalFeePercentage 
+        updatedForm.environmentalFee = updatedForm.productType === 'Frozen' && updatedForm.environmentalFeeEnabled && selectedFactory?.environmentalFeePercentage 
           ? (Number(updatedForm.packagingRate || 0) + Number(updatedForm.filletingRate || 0) + Number(updatedForm.freezingRate || 0)) * updatedForm.quantity * (Number(selectedFactory.environmentalFeePercentage) / 100)
           : 0;
-        updatedForm.electricityFee = updatedForm.productType === 'Frozen' && electricityFeeEnabled && selectedFactory?.electricityFeePercentage 
+        updatedForm.electricityFee = updatedForm.productType === 'Frozen' && updatedForm.electricityFeeEnabled && selectedFactory?.electricityFeePercentage 
           ? (Number(updatedForm.packagingRate || 0) + Number(updatedForm.filletingRate || 0) + Number(updatedForm.freezingRate || 0)) * updatedForm.quantity * (Number(selectedFactory.electricityFeePercentage) / 100)
           : 0;
-        updatedForm.receptionFee = receptionFeeEnabled && selectedFactory?.receptionFee ? Number(selectedFactory.receptionFee) : 0;
-        updatedForm.dispatchFee = dispatchFeeEnabled && selectedFactory?.dispatchFee ? Number(selectedFactory.dispatchFee) : 0;
+        updatedForm.receptionFee = updatedForm.receptionFeeEnabled && selectedFactory?.receptionFee ? Number(selectedFactory.receptionFee) : 0;
+        updatedForm.dispatchFee = updatedForm.dispatchFeeEnabled && selectedFactory?.dispatchFee ? Number(selectedFactory.dispatchFee) : 0;
         
         return updatedForm;
       }
@@ -668,17 +675,37 @@ const QuoteGeneration: React.FC<QuoteGenerationProps> = () => {
     setSelectedFactory(factory || null);
   };
 
-  // Toggle handlers (exactly like NewEnquiry)
-  const handleTogglePalletCharge = (enabled: boolean) => setPalletChargeEnabled(enabled);
-  const handleToggleTerminalCharge = (enabled: boolean) => setTerminalChargeEnabled(enabled);
-  const handleToggleReceptionFee = (enabled: boolean) => setReceptionFeeEnabled(enabled);
-  const handleToggleDispatchFee = (enabled: boolean) => setDispatchFeeEnabled(enabled);
-  const handleToggleEnvironmentalFee = (enabled: boolean) => setEnvironmentalFeeEnabled(enabled);
-  const handleToggleElectricityFee = (enabled: boolean) => setElectricityFeeEnabled(enabled);
-  const handleToggleProdAB = (enabled: boolean) => setProdABEnabled(enabled);
-  const handleToggleDescaling = (enabled: boolean) => setDescalingEnabled(enabled);
-  const handleTogglePortionSkinOn = (enabled: boolean) => setPortionSkinOnEnabled(enabled);
-  const handleTogglePortionSkinOff = (enabled: boolean) => setPortionSkinOffEnabled(enabled);
+  // Toggle handlers - now work with individual SKU states
+  const handleTogglePalletCharge = (skuId: string, enabled: boolean) => {
+    handleSKUFormChange(skuId, 'palletChargeEnabled', enabled);
+  };
+  const handleToggleTerminalCharge = (skuId: string, enabled: boolean) => {
+    handleSKUFormChange(skuId, 'terminalChargeEnabled', enabled);
+  };
+  const handleToggleReceptionFee = (skuId: string, enabled: boolean) => {
+    handleSKUFormChange(skuId, 'receptionFeeEnabled', enabled);
+  };
+  const handleToggleDispatchFee = (skuId: string, enabled: boolean) => {
+    handleSKUFormChange(skuId, 'dispatchFeeEnabled', enabled);
+  };
+  const handleToggleEnvironmentalFee = (skuId: string, enabled: boolean) => {
+    handleSKUFormChange(skuId, 'environmentalFeeEnabled', enabled);
+  };
+  const handleToggleElectricityFee = (skuId: string, enabled: boolean) => {
+    handleSKUFormChange(skuId, 'electricityFeeEnabled', enabled);
+  };
+  const handleToggleProdAB = (skuId: string, enabled: boolean) => {
+    handleSKUFormChange(skuId, 'prodABEnabled', enabled);
+  };
+  const handleToggleDescaling = (skuId: string, enabled: boolean) => {
+    handleSKUFormChange(skuId, 'descalingEnabled', enabled);
+  };
+  const handleTogglePortionSkinOn = (skuId: string, enabled: boolean) => {
+    handleSKUFormChange(skuId, 'portionSkinOnEnabled', enabled);
+  };
+  const handleTogglePortionSkinOff = (skuId: string, enabled: boolean) => {
+    handleSKUFormChange(skuId, 'portionSkinOffEnabled', enabled);
+  };
 
   // Generate quote
   const handleGenerateQuote = async () => {
@@ -773,7 +800,19 @@ const QuoteGeneration: React.FC<QuoteGenerationProps> = () => {
       electricityFee: 0,
       
       // Optional charges
-      optionalCharges: [] as Array<{chargeValue: number}>
+      optionalCharges: [] as Array<{chargeValue: number}>,
+      
+      // Individual toggle states for each SKU (default values)
+      palletChargeEnabled: true,
+      terminalChargeEnabled: true,
+      receptionFeeEnabled: false,
+      dispatchFeeEnabled: false,
+      environmentalFeeEnabled: false,
+      electricityFeeEnabled: false,
+      prodABEnabled: false,
+      descalingEnabled: false,
+      portionSkinOnEnabled: false,
+      portionSkinOffEnabled: false
     };
 
     setSkuForms(prev => [newItem, ...prev]);
@@ -1104,30 +1143,30 @@ const QuoteGeneration: React.FC<QuoteGenerationProps> = () => {
                       optionalCharges={[]}
                       totalCharges={Number(skuForm.totalCost) || 0}
                       product={skuForm.product}
-                      onTogglePalletCharge={handleTogglePalletCharge}
-                      onToggleTerminalCharge={handleToggleTerminalCharge}
-                      palletChargeEnabled={palletChargeEnabled}
-                      terminalChargeEnabled={terminalChargeEnabled}
+                      onTogglePalletCharge={(enabled) => handleTogglePalletCharge(skuForm.id, enabled)}
+                      onToggleTerminalCharge={(enabled) => handleToggleTerminalCharge(skuForm.id, enabled)}
+                      palletChargeEnabled={skuForm.palletChargeEnabled}
+                      terminalChargeEnabled={skuForm.terminalChargeEnabled}
                       // Freezing charges
-                      receptionFeeEnabled={receptionFeeEnabled}
-                      dispatchFeeEnabled={dispatchFeeEnabled}
-                      environmentalFeeEnabled={environmentalFeeEnabled}
-                      electricityFeeEnabled={electricityFeeEnabled}
-                      onToggleReceptionFee={handleToggleReceptionFee}
-                      onToggleDispatchFee={handleToggleDispatchFee}
-                      onToggleEnvironmentalFee={handleToggleEnvironmentalFee}
-                      onToggleElectricityFee={handleToggleElectricityFee}
+                      receptionFeeEnabled={skuForm.receptionFeeEnabled}
+                      dispatchFeeEnabled={skuForm.dispatchFeeEnabled}
+                      environmentalFeeEnabled={skuForm.environmentalFeeEnabled}
+                      electricityFeeEnabled={skuForm.electricityFeeEnabled}
+                      onToggleReceptionFee={(enabled) => handleToggleReceptionFee(skuForm.id, enabled)}
+                      onToggleDispatchFee={(enabled) => handleToggleDispatchFee(skuForm.id, enabled)}
+                      onToggleEnvironmentalFee={(enabled) => handleToggleEnvironmentalFee(skuForm.id, enabled)}
+                      onToggleElectricityFee={(enabled) => handleToggleElectricityFee(skuForm.id, enabled)}
                       isStorageRequired={skuForm.isStorageRequired}
                       numberOfWeeks={skuForm.numberOfWeeks}
                       // Optional processing charges
-                      prodABEnabled={prodABEnabled}
-                      descalingEnabled={descalingEnabled}
-                      portionSkinOnEnabled={portionSkinOnEnabled}
-                      portionSkinOffEnabled={portionSkinOffEnabled}
-                      onToggleProdAB={handleToggleProdAB}
-                      onToggleDescaling={handleToggleDescaling}
-                      onTogglePortionSkinOn={handleTogglePortionSkinOn}
-                      onTogglePortionSkinOff={handleTogglePortionSkinOff}
+                      prodABEnabled={skuForm.prodABEnabled}
+                      descalingEnabled={skuForm.descalingEnabled}
+                      portionSkinOnEnabled={skuForm.portionSkinOnEnabled}
+                      portionSkinOffEnabled={skuForm.portionSkinOffEnabled}
+                      onToggleProdAB={(enabled) => handleToggleProdAB(skuForm.id, enabled)}
+                      onToggleDescaling={(enabled) => handleToggleDescaling(skuForm.id, enabled)}
+                      onTogglePortionSkinOn={(enabled) => handleTogglePortionSkinOn(skuForm.id, enabled)}
+                      onTogglePortionSkinOff={(enabled) => handleTogglePortionSkinOff(skuForm.id, enabled)}
                     />
                   ) : (
                     <Alert severity="info">

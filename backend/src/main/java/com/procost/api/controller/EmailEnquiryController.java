@@ -96,6 +96,47 @@ public class EmailEnquiryController {
     }
     
     /**
+     * Update enquiry status
+     */
+    @PutMapping("/{id}/status")
+    public ResponseEntity<Map<String, Object>> updateEnquiryStatus(
+            @PathVariable Long id, 
+            @RequestBody Map<String, String> request) {
+        try {
+            String status = request.get("status");
+            EnquiryStatus enquiryStatus = EnquiryStatus.valueOf(status.toUpperCase());
+            
+            Optional<EmailEnquiry> enquiryOpt = emailEnquiryRepository.findById(id);
+            if (enquiryOpt.isEmpty()) {
+                return ResponseEntity.notFound().build();
+            }
+            
+            EmailEnquiry enquiry = enquiryOpt.get();
+            enquiry.setStatus(enquiryStatus);
+            emailEnquiryRepository.save(enquiry);
+            
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("message", "Enquiry status updated to " + status);
+            response.put("enquiryId", enquiry.getEnquiryId());
+            response.put("newStatus", status);
+            
+            return ResponseEntity.ok(response);
+            
+        } catch (IllegalArgumentException e) {
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", false);
+            response.put("error", "Invalid status value");
+            return ResponseEntity.badRequest().body(response);
+        } catch (Exception e) {
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", false);
+            response.put("error", e.getMessage());
+            return ResponseEntity.status(500).body(response);
+        }
+    }
+
+    /**
      * Get dashboard statistics
      */
     @GetMapping("/dashboard/stats")

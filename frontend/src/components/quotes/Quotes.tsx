@@ -19,6 +19,7 @@ import {
 import Header from '../layout/Header';
 import { useAuth } from '../../context/AuthContext';
 import AuthService from '../../services/AuthService';
+import { API_BASE_URL } from '../../config';
 
 interface Quote {
   id: number;
@@ -26,12 +27,19 @@ interface Quote {
   customer: {
     contactPerson: string;
     companyName: string;
+    email: string;
+  };
+  enquiry: {
+    id: number;
+    enquiryId: string;
+    subject: string;
+    fromEmail: string;
   };
   totalAmount: number;
   currency: string;
   status: string;
   createdAt: string;
-  expiresAt: string;
+  validityPeriod: string;
 }
 
 const Quotes: React.FC = () => {
@@ -47,7 +55,7 @@ const Quotes: React.FC = () => {
   useEffect(() => {
     const loadQuotes = async () => {
       try {
-        const response = await fetch('/api/quotes', {
+        const response = await fetch(`${API_BASE_URL}/api/quotes`, {
           headers: {
             'Authorization': `Bearer ${AuthService.getCurrentUser()?.token}`
           }
@@ -128,7 +136,7 @@ const Quotes: React.FC = () => {
                     <TableCell>Amount</TableCell>
                     <TableCell>Status</TableCell>
                     <TableCell>Created</TableCell>
-                    <TableCell>Expires</TableCell>
+                    <TableCell>Validity</TableCell>
                     <TableCell>Actions</TableCell>
                   </TableRow>
                 </TableHead>
@@ -156,7 +164,7 @@ const Quotes: React.FC = () => {
                         {new Date(quote.createdAt).toLocaleDateString()}
                       </TableCell>
                       <TableCell>
-                        {new Date(quote.expiresAt).toLocaleDateString()}
+                        {quote.validityPeriod}
                       </TableCell>
                       <TableCell>
                         <Button size="small" variant="outlined">

@@ -110,10 +110,48 @@ public class QuoteController {
      * Get all quotes
      */
     @GetMapping
-    public ResponseEntity<List<Quote>> getAllQuotes() {
+    public ResponseEntity<List<Map<String, Object>>> getAllQuotes() {
         logger.info("Fetching all quotes");
         List<Quote> quotes = quoteRepository.findAll();
-        return ResponseEntity.ok(quotes);
+        
+        List<Map<String, Object>> quoteDtos = quotes.stream()
+            .map(this::convertToDto)
+            .collect(java.util.stream.Collectors.toList());
+        
+        return ResponseEntity.ok(quoteDtos);
+    }
+    
+    private Map<String, Object> convertToDto(Quote quote) {
+        Map<String, Object> dto = new HashMap<>();
+        dto.put("id", quote.getId());
+        dto.put("quoteNumber", quote.getQuoteNumber());
+        dto.put("status", quote.getStatus());
+        dto.put("totalAmount", quote.getTotalAmount());
+        dto.put("currency", quote.getCurrency());
+        dto.put("createdAt", quote.getCreatedAt());
+        dto.put("validityPeriod", quote.getValidityPeriod());
+        
+        // Add basic customer info without circular references
+        if (quote.getCustomer() != null) {
+            Map<String, Object> customerDto = new HashMap<>();
+            customerDto.put("id", quote.getCustomer().getId());
+            customerDto.put("email", quote.getCustomer().getEmail());
+            customerDto.put("companyName", quote.getCustomer().getCompanyName());
+            customerDto.put("contactPerson", quote.getCustomer().getContactPerson());
+            dto.put("customer", customerDto);
+        }
+        
+        // Add basic enquiry info without circular references
+        if (quote.getEmailEnquiry() != null) {
+            Map<String, Object> enquiryDto = new HashMap<>();
+            enquiryDto.put("id", quote.getEmailEnquiry().getId());
+            enquiryDto.put("enquiryId", quote.getEmailEnquiry().getEnquiryId());
+            enquiryDto.put("subject", quote.getEmailEnquiry().getSubject());
+            enquiryDto.put("fromEmail", quote.getEmailEnquiry().getFromEmail());
+            dto.put("enquiry", enquiryDto);
+        }
+        
+        return dto;
     }
     
     /**

@@ -1,5 +1,7 @@
 package com.procost.api.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import javax.persistence.*;
 import javax.validation.constraints.Size;
 import java.time.LocalDateTime;
@@ -20,16 +22,19 @@ public class Quote {
     
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "email_enquiry_id", nullable = false)
+    @JsonIgnoreProperties({"customer", "enquiryItems"})
     private EmailEnquiry emailEnquiry;
     
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "customer_id", nullable = false)
+    @JsonIgnoreProperties({"emailEnquiries", "quotes", "orders"})
     private Customer customer;
     
     @Enumerated(EnumType.STRING)
     private QuoteStatus status = QuoteStatus.DRAFT; // DRAFT, SENT, ACCEPTED, REJECTED, EXPIRED
     
     @OneToMany(mappedBy = "quote", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @JsonIgnore
     private List<QuoteItem> quoteItems = new ArrayList<>();
     
     private Double totalAmount;

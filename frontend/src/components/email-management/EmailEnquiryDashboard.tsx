@@ -48,6 +48,8 @@ import { useAuth } from '../../context/AuthContext';
 import Header from '../layout/Header';
 import EmailService, { Email, EmailStats } from '../../services/EmailService';
 import EmailEnquiryService, { EnquiryItem } from '../../services/EmailEnquiryService';
+import AuthService from '../../services/AuthService';
+import { API_BASE_URL } from '../../config';
 
 // Types for email-driven workflow
 interface EmailEnquiry {
@@ -79,15 +81,23 @@ interface Customer {
 interface Quote {
   id: number;
   quoteNumber: string;
-  enquiryId: string;
-  customer: Customer;
+  customer: {
+    id: number;
+    email: string;
+    contactPerson?: string;
+    companyName?: string;
+  };
+  enquiry: {
+    id: number;
+    enquiryId: string;
+    subject: string;
+    fromEmail: string;
+  };
   status: 'DRAFT' | 'SENT' | 'ACCEPTED' | 'REJECTED' | 'EXPIRED';
   totalAmount: number;
   currency: string;
   createdAt: string;
-  sentAt?: string;
-  expiresAt?: string;
-  quoteItems: QuoteItem[];
+  validityPeriod: string;
 }
 
 interface QuoteItem {
@@ -144,6 +154,7 @@ const EmailEnquiryDashboard: React.FC = () => {
   const [enquiries, setEnquiries] = useState<EmailEnquiry[]>([]);
   const [quotes, setQuotes] = useState<Quote[]>([]);
   const [orders, setOrders] = useState<Order[]>([]);
+  const [quotesLoading, setQuotesLoading] = useState(false);
   
   // Email management state
   const [emails, setEmails] = useState<Email[]>([]);
@@ -205,6 +216,10 @@ const EmailEnquiryDashboard: React.FC = () => {
     if (newValue === 1) {
       loadEnquiries();
     }
+    // Load quotes when switching to quotes tab
+    if (newValue === 2) {
+      loadQuotes();
+    }
   };
 
   // Load emails function
@@ -233,6 +248,38 @@ const EmailEnquiryDashboard: React.FC = () => {
     } catch (error) {
       console.error('Failed to load enquiries:', error);
       setError('Failed to load enquiries');
+    }
+  };
+
+  // Load quotes function
+  const loadQuotes = async () => {
+    try {
+      setQuotesLoading(true);
+      const authHeaders = AuthService.getAuthHeader();
+      
+      const response = await fetch(`${API_BASE_URL}/api/quotes`, {
+        headers: {
+          ...authHeaders,
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      if (!response.ok) {
+        if (response.status === 401) {
+          setError('Authentication failed. Please login again.');
+          // Optionally redirect to login
+          return;
+        }
+        throw new Error(`Failed to fetch quotes: ${response.status}`);
+      }
+      
+      const quotesData = await response.json();
+      setQuotes(quotesData);
+    } catch (error) {
+      console.error('Failed to load quotes:', error);
+      setError('Failed to load quotes');
+    } finally {
+      setQuotesLoading(false);
     }
   };
 
@@ -816,15 +863,111 @@ const EmailEnquiryDashboard: React.FC = () => {
             {/* Quotes Tab */}
             {activeTab === 2 && (
               <Box>
-                <Typography variant="h6" gutterBottom>Quotes Management</Typography>
+                <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
+                  <Typography variant="h6">Quotes Management</Typography>
+                  <Button
+                    variant="outlined"
+                    startIcon={<RefreshIcon />}
+                    onClick={loadQuotes}
+                  >
+                    Refresh
+                  </Button>
+                </Box>
+                
                 <Typography color="textSecondary" gutterBottom>
                   Generated quotes from processed enquiries
                 </Typography>
                 
-                <Alert severity="success" sx={{ mt: 2 }}>
-                  💼 Quotes are automatically generated from AI-processed enquiries and sent via email.
-                  Track acceptance, rejection, and conversion to orders.
-                </Alert>
+                {quotesLoading ? (
+                  <Box display="flex" justifyContent="center" p={4}>
+                    <CircularProgress />
+                  </Box>
+                ) : quotes.length > 0 ? (
+                  <Box sx={{ mt: 3 }}>
+                    {/* Table Header */}
+                    <Box 
+                      sx={{
+                        display: 'grid',
+                        gridTemplateColumns: '2fr 2fr 2fr 1.5fr 1fr 1.5fr 1fr',
+                        gap: 2,
+                        p: 2,
+                        bgcolor: 'grey.100',
+                        borderRadius: 1,
+                        fontWeight: 'bold',
+                        mb: 1,
+                        alignItems: 'center'
+                      }}
+                    >
+                      <Typography variant="subtitle2" fontWeight="bold">Quote Number</Typography>
+                      <Typography variant="subtitle2" fontWeight="bold">Customer</Typography>
+                      <Typography variant="subtitle2" fontWeight="bold">Enquiry</Typography>
+                      <Typography variant="subtitle2" fontWeight="bold" sx={{ textAlign: 'center' }}>Amount</Typography>
+                      <Typography variant="subtitle2" fontWeight="bold" sx={{ textAlign: 'center' }}>Status</Typography>
+                      <Typography variant="subtitle2" fontWeight="bold" sx={{ textAlign: 'center' }}>Created</Typography>
+                      <Typography variant="subtitle2" fontWeight="bold" sx={{ textAlign: 'center' }}>Validity</Typography>
+                    </Box>
+                    
+                    {/* Table Rows */}
+                    {quotes.map((quote) => (
+                      <Box 
+                        key={quote.id}
+                        sx={{
+                          display: 'grid',
+                          gridTemplateColumns: '2fr 2fr 2fr 1.5fr 1fr 1.5fr 1fr',
+                          gap: 2,
+                          p: 2,
+                          bgcolor: 'white',
+                          borderRadius: 1,
+                          mb: 1,
+                          border: '1px solid',
+                          borderColor: 'grey.200',
+                          alignItems: 'center'
+                        }}
+                      >
+                        <Typography variant="body2" fontWeight="medium">
+                          {quote.quoteNumber}
+                        </Typography>
+                        <Box>
+                          <Typography variant="body2" fontWeight="medium">
+                            {quote.customer.contactPerson || quote.customer.email}
+                          </Typography>
+                          <Typography variant="caption" color="textSecondary">
+                            {quote.customer.companyName || 'No company'}
+                          </Typography>
+                        </Box>
+                        <Box>
+                          <Typography variant="body2" fontWeight="medium">
+                            {quote.enquiry.enquiryId}
+                          </Typography>
+                          <Typography variant="caption" color="textSecondary" noWrap>
+                            {quote.enquiry.subject}
+                          </Typography>
+                        </Box>
+                        <Typography variant="body2" sx={{ textAlign: 'center' }}>
+                          {quote.currency} {quote.totalAmount.toFixed(2)}
+                        </Typography>
+                        <Box sx={{ display: 'flex', justifyContent: 'center' }}>
+                          <Chip 
+                            label={quote.status} 
+                            color={getStatusColor(quote.status)} 
+                            size="small"
+                          />
+                        </Box>
+                        <Typography variant="body2" sx={{ textAlign: 'center' }}>
+                          {new Date(quote.createdAt).toLocaleDateString()}
+                        </Typography>
+                        <Typography variant="body2" sx={{ textAlign: 'center' }}>
+                          {quote.validityPeriod}
+                        </Typography>
+                      </Box>
+                    ))}
+                  </Box>
+                ) : (
+                  <Alert severity="info" sx={{ mt: 2 }}>
+                    💼 No quotes found. Quotes are automatically generated from AI-processed enquiries.
+                    Generate quotes from the Email Enquiries tab.
+                  </Alert>
+                )}
               </Box>
             )}
 

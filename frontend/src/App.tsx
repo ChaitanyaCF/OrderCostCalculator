@@ -17,6 +17,7 @@ import Register from './components/auth/Register';
 import Dashboard from './components/dashboard/Dashboard';
 import NewEnquiry from './components/enquiry/NewEnquiry';
 import QuoteGeneration from './components/enquiry/QuoteGeneration';
+import Quotes from './components/quotes/Quotes';
 import FactoryRateCard from './components/ratecard/FactoryRateCard';
 import UserManagement from './components/user/UserManagement';
 import EmailEnquiryDashboard from './components/email-management/EmailEnquiryDashboard';
@@ -200,6 +201,11 @@ function App() {
                 <FactoryProvider>
                   <QuoteGeneration />
                 </FactoryProvider>
+              </ProtectedRoute>
+            } />
+            <Route path="/quotes" element={
+              <ProtectedRoute>
+                <Quotes />
               </ProtectedRoute>
             } />
             <Route path="/factory-rate-card" element={
