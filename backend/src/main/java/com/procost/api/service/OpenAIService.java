@@ -30,6 +30,9 @@ public class OpenAIService {
     @Value("${openai.model:gpt-4.1-mini}")
     private String openaiModel;
     
+    @Value("${ai.request.timeout:120000}")
+    private long requestTimeout;
+    
     @Autowired
     private CustomerRepository customerRepository;
     
@@ -47,8 +50,8 @@ public class OpenAIService {
         }
         
         try {
-            // Create OpenAI service with timeout
-            OpenAiService service = new OpenAiService(openaiApiKey, Duration.ofSeconds(60));
+            // Create OpenAI service with configurable timeout
+            OpenAiService service = new OpenAiService(openaiApiKey, Duration.ofMillis(requestTimeout));
             
             // 🌍 Step 1: Translate to English if needed
             String translatedEmailBody = translateToEnglish(service, emailBody);

@@ -102,7 +102,7 @@ public class HybridEmailProcessor {
             return aiItems;
             
         } catch (Exception e) {
-            logger.warn("❌ OpenAI product parsing failed, returning empty list: {}", e.getMessage());
+            logger.warn("❌ OpenAI product parsing failed: {}", e.getMessage());
             recordAIUsage("product_parsing", "openai_failed", 0);
             
             // Return empty list if OpenAI fails

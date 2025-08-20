@@ -310,18 +310,20 @@ public class ZapierDataController {
             return EmailStage.ENQUIRY_CLOSED;
         }
         
-        // FOLLOW UP patterns (questions, modifications, clarifications)
+        // INITIAL ENQUIRY patterns (check FIRST - higher priority)
+        if (text.contains("need") || text.contains("require") || text.contains("looking for") ||
+            text.contains("inquiry") || text.contains("enquiry") || text.contains("quote request") ||
+            text.contains("price") || text.contains("cost") || text.contains("interested in") ||
+            text.contains("tons") || text.contains("volume") || text.contains("processing") ||
+            text.contains("quote") || text.contains("estimate") || text.contains("pricing")) {
+            return EmailStage.INITIAL_ENQUIRY;
+        }
+        
+        // FOLLOW UP patterns (check SECOND - lower priority)
         if (text.contains("question") || text.contains("clarification") || text.contains("modify") ||
             text.contains("change") || text.contains("update") || text.contains("when") ||
             text.contains("how") || text.contains("what about") || text.contains("also")) {
             return EmailStage.FOLLOW_UP;
-        }
-        
-        // INITIAL ENQUIRY patterns (first contact)
-        if (text.contains("need") || text.contains("require") || text.contains("looking for") ||
-            text.contains("inquiry") || text.contains("enquiry") || text.contains("quote request") ||
-            text.contains("price") || text.contains("cost") || text.contains("interested in")) {
-            return EmailStage.INITIAL_ENQUIRY;
         }
         
         // Fallback to EmailType-based classification
