@@ -76,6 +76,14 @@ interface Customer {
   country?: string;
 }
 
+interface CustomerWithCounts extends Customer {
+  createdAt: string;
+  updatedAt: string;
+  enquiryCount: number;
+  quoteCount: number;
+  orderCount: number;
+}
+
 
 
 interface Quote {
@@ -155,12 +163,15 @@ const EmailEnquiryDashboard: React.FC = () => {
   const [quotes, setQuotes] = useState<Quote[]>([]);
   const [orders, setOrders] = useState<Order[]>([]);
   const [quotesLoading, setQuotesLoading] = useState(false);
+  const [customersLoading, setCustomersLoading] = useState(false);
+  const [recentActivityLoading, setRecentActivityLoading] = useState(false);
+  const [recentActivity, setRecentActivity] = useState<ActivityItem[]>([]);
   
   // Email management state
   const [emails, setEmails] = useState<Email[]>([]);
   const [emailStats, setEmailStats] = useState<EmailStats | null>(null);
   const [emailsLoading, setEmailsLoading] = useState(false);
-  const [customers, setCustomers] = useState<Customer[]>([]);
+  const [customers, setCustomers] = useState<CustomerWithCounts[]>([]);
   const [stats, setStats] = useState<DashboardStats | null>(null);
   
   // Dialog states
@@ -168,6 +179,9 @@ const EmailEnquiryDashboard: React.FC = () => {
   const [detailDialogOpen, setDetailDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [enquiryToDelete, setEnquiryToDelete] = useState<EmailEnquiry | null>(null);
+  const [quoteDetailsDialogOpen, setQuoteDetailsDialogOpen] = useState(false);
+  const [selectedQuoteDetails, setSelectedQuoteDetails] = useState<any>(null);
+  const [quoteDetailsLoading, setQuoteDetailsLoading] = useState(false);
 
   useEffect(() => {
     loadDashboardData();
@@ -219,6 +233,14 @@ const EmailEnquiryDashboard: React.FC = () => {
     // Load quotes when switching to quotes tab
     if (newValue === 2) {
       loadQuotes();
+    }
+    // Load customers when switching to customers tab
+    if (newValue === 4) {
+      loadCustomers();
+    }
+    // Load recent activity when switching to recent activity tab
+    if (newValue === 5) {
+      loadRecentActivity();
     }
   };
 
@@ -283,6 +305,68 @@ const EmailEnquiryDashboard: React.FC = () => {
     }
   };
 
+  // Load customers function
+  const loadCustomers = async () => {
+    try {
+      setCustomersLoading(true);
+      const authHeaders = AuthService.getAuthHeader();
+      
+      const response = await fetch(`${API_BASE_URL}/api/email-enquiries/customers`, {
+        headers: {
+          ...authHeaders,
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      if (!response.ok) {
+        if (response.status === 401) {
+          setError('Authentication failed. Please login again.');
+          return;
+        }
+        throw new Error(`Failed to fetch customers: ${response.status}`);
+      }
+      
+      const customersData = await response.json();
+      setCustomers(customersData);
+    } catch (error) {
+      console.error('Failed to load customers:', error);
+      setError('Failed to load customers');
+    } finally {
+      setCustomersLoading(false);
+    }
+  };
+
+  // Load recent activity function
+  const loadRecentActivity = async () => {
+    try {
+      setRecentActivityLoading(true);
+      const authHeaders = AuthService.getAuthHeader();
+      
+      const response = await fetch(`${API_BASE_URL}/api/email-enquiries/recent-activity`, {
+        headers: {
+          ...authHeaders,
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      if (!response.ok) {
+        if (response.status === 401) {
+          setError('Authentication failed. Please login again.');
+          return;
+        }
+        throw new Error(`Failed to fetch recent activity: ${response.status}`);
+      }
+      
+      const activityData = await response.json();
+      setRecentActivity(activityData);
+    } catch (error) {
+      console.error('Failed to load recent activity:', error);
+      setError('Failed to load recent activity');
+    } finally {
+      setRecentActivityLoading(false);
+    }
+  };
+
   // Classify email function
   const handleClassifyEmail = async (emailId: number, classification: 'INITIAL_ENQUIRY' | 'ORDER' | 'GENERAL') => {
     try {
@@ -334,6 +418,34 @@ const EmailEnquiryDashboard: React.FC = () => {
   const cancelDelete = () => {
     setDeleteDialogOpen(false);
     setEnquiryToDelete(null);
+  };
+
+  // View quote details
+  const handleViewQuoteDetails = async (quoteId: number) => {
+    try {
+      setQuoteDetailsLoading(true);
+      setQuoteDetailsDialogOpen(true);
+      
+      const authHeaders = AuthService.getAuthHeader();
+      const response = await fetch(`${API_BASE_URL}/api/quotes/${quoteId}/details`, {
+        headers: {
+          ...authHeaders,
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Failed to fetch quote details: ${response.status}`);
+      }
+      
+      const quoteDetails = await response.json();
+      setSelectedQuoteDetails(quoteDetails);
+    } catch (error) {
+      console.error('Failed to load quote details:', error);
+      setError('Failed to load quote details');
+    } finally {
+      setQuoteDetailsLoading(false);
+    }
   };
 
   const getStatusColor = (status: string) => {
@@ -792,7 +904,7 @@ const EmailEnquiryDashboard: React.FC = () => {
                     </Box>
                     
                     {/* Table Rows */}
-                    {enquiries.map((enquiry) => (
+                          {enquiries.map((enquiry) => (
                       <Box 
                         key={enquiry.id}
                         sx={{
@@ -819,8 +931,8 @@ const EmailEnquiryDashboard: React.FC = () => {
                                 </Typography>
                         <Box sx={{ display: 'flex', justifyContent: 'center' }}>
                                 <Chip 
-                            label={enquiry.status} 
-                            color={getStatusColor(enquiry.status)} 
+                                  label={enquiry.status} 
+                                  color={getStatusColor(enquiry.status)}
                                   size="small"
                           />
                         </Box>
@@ -850,15 +962,15 @@ const EmailEnquiryDashboard: React.FC = () => {
                         </Box>
                       </Box>
                     ))}
-                    </Box>
+                  </Box>
                 ) : (
                   <Alert severity="info" sx={{ mt: 2 }}>
                     📨 No enquiries found. Connect your Outlook email to automatically process enquiries via Zapier MCP.
                     New emails will be parsed by AI and converted to structured enquiries.
                   </Alert>
                 )}
-                  </Box>
-                )}
+              </Box>
+            )}
 
             {/* Quotes Tab */}
             {activeTab === 2 && (
@@ -886,9 +998,9 @@ const EmailEnquiryDashboard: React.FC = () => {
                   <Box sx={{ mt: 3 }}>
                     {/* Table Header */}
                     <Box 
-                      sx={{
-                        display: 'grid',
-                        gridTemplateColumns: '2fr 2fr 2fr 1.5fr 1fr 1.5fr 1fr',
+                                              sx={{
+                          display: 'grid',
+                          gridTemplateColumns: '2fr 2fr 2fr 1.5fr 1fr 1.5fr 1fr 1fr',
                         gap: 2,
                         p: 2,
                         bgcolor: 'grey.100',
@@ -905,15 +1017,16 @@ const EmailEnquiryDashboard: React.FC = () => {
                       <Typography variant="subtitle2" fontWeight="bold" sx={{ textAlign: 'center' }}>Status</Typography>
                       <Typography variant="subtitle2" fontWeight="bold" sx={{ textAlign: 'center' }}>Created</Typography>
                       <Typography variant="subtitle2" fontWeight="bold" sx={{ textAlign: 'center' }}>Validity</Typography>
+                      <Typography variant="subtitle2" fontWeight="bold" sx={{ textAlign: 'center' }}>Actions</Typography>
                     </Box>
                     
                     {/* Table Rows */}
-                    {quotes.map((quote) => (
+                          {quotes.map((quote) => (
                       <Box 
                         key={quote.id}
                         sx={{
                           display: 'grid',
-                          gridTemplateColumns: '2fr 2fr 2fr 1.5fr 1fr 1.5fr 1fr',
+                          gridTemplateColumns: '2fr 2fr 2fr 1.5fr 1fr 1.5fr 1fr 1fr',
                           gap: 2,
                           p: 2,
                           bgcolor: 'white',
@@ -925,41 +1038,52 @@ const EmailEnquiryDashboard: React.FC = () => {
                         }}
                       >
                         <Typography variant="body2" fontWeight="medium">
-                          {quote.quoteNumber}
-                        </Typography>
-                        <Box>
+                                  {quote.quoteNumber}
+                                </Typography>
+                                <Box>
                           <Typography variant="body2" fontWeight="medium">
                             {quote.customer.contactPerson || quote.customer.email}
-                          </Typography>
-                          <Typography variant="caption" color="textSecondary">
+                                  </Typography>
+                                  <Typography variant="caption" color="textSecondary">
                             {quote.customer.companyName || 'No company'}
-                          </Typography>
-                        </Box>
+                                  </Typography>
+                                </Box>
                         <Box>
                           <Typography variant="body2" fontWeight="medium">
                             {quote.enquiry.enquiryId}
-                          </Typography>
+                                </Typography>
                           <Typography variant="caption" color="textSecondary" noWrap>
                             {quote.enquiry.subject}
-                          </Typography>
+                                </Typography>
                         </Box>
                         <Typography variant="body2" sx={{ textAlign: 'center' }}>
                           {quote.currency} {quote.totalAmount.toFixed(2)}
                         </Typography>
                         <Box sx={{ display: 'flex', justifyContent: 'center' }}>
-                          <Chip 
-                            label={quote.status} 
+                                <Chip 
+                                  label={quote.status} 
                             color={getStatusColor(quote.status)} 
-                            size="small"
+                                  size="small"
                           />
                         </Box>
                         <Typography variant="body2" sx={{ textAlign: 'center' }}>
-                          {new Date(quote.createdAt).toLocaleDateString()}
-                        </Typography>
+                                  {new Date(quote.createdAt).toLocaleDateString()}
+                                </Typography>
                         <Typography variant="body2" sx={{ textAlign: 'center' }}>
                           {quote.validityPeriod}
-                        </Typography>
-                      </Box>
+                                  </Typography>
+                        <Box sx={{ display: 'flex', justifyContent: 'center' }}>
+                                <Button 
+                                  size="small"
+                            variant="outlined"
+                            startIcon={<VisibilityIcon />}
+                            onClick={() => handleViewQuoteDetails(quote.id)}
+                            sx={{ minWidth: 'auto', px: 1 }}
+                          >
+                            Details
+                                </Button>
+                    </Box>
+                  </Box>
                     ))}
                   </Box>
                 ) : (
@@ -989,26 +1113,125 @@ const EmailEnquiryDashboard: React.FC = () => {
             {/* Customers Tab */}
             {activeTab === 4 && (
               <Box>
-                <Typography variant="h6" gutterBottom>Customer Management</Typography>
+                <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
+                  <Typography variant="h6">Customer Management</Typography>
+                  <Button
+                    variant="outlined"
+                    startIcon={<RefreshIcon />}
+                    onClick={loadCustomers}
+                  >
+                    Refresh
+                  </Button>
+                </Box>
+                
                 <Typography color="textSecondary" gutterBottom>
                   Email-based customer profiles and communication history
                 </Typography>
                 
+                {customersLoading ? (
+                  <Box display="flex" justifyContent="center" p={4}>
+                    <CircularProgress />
+                  </Box>
+                ) : customers.length > 0 ? (
+                  <Box sx={{ mt: 3 }}>
+                    {/* Table Header */}
+                    <Box 
+                      sx={{
+                        display: 'grid',
+                        gridTemplateColumns: '2fr 2fr 2fr 1fr 1fr 1fr 1.5fr',
+                        gap: 2,
+                        p: 2,
+                        bgcolor: 'grey.100',
+                        borderRadius: 1,
+                        fontWeight: 'bold',
+                        mb: 1,
+                        alignItems: 'center'
+                      }}
+                    >
+                      <Typography variant="subtitle2" fontWeight="bold">Email</Typography>
+                      <Typography variant="subtitle2" fontWeight="bold">Contact Person</Typography>
+                      <Typography variant="subtitle2" fontWeight="bold">Company</Typography>
+                      <Typography variant="subtitle2" fontWeight="bold" sx={{ textAlign: 'center' }}>Country</Typography>
+                      <Typography variant="subtitle2" fontWeight="bold" sx={{ textAlign: 'center' }}>Enquiries</Typography>
+                      <Typography variant="subtitle2" fontWeight="bold" sx={{ textAlign: 'center' }}>Quotes</Typography>
+                      <Typography variant="subtitle2" fontWeight="bold" sx={{ textAlign: 'center' }}>Created</Typography>
+                    </Box>
+                    
+                    {/* Table Rows */}
+                    {customers.map((customer) => (
+                      <Box 
+                        key={customer.id}
+                        sx={{
+                          display: 'grid',
+                          gridTemplateColumns: '2fr 2fr 2fr 1fr 1fr 1fr 1.5fr',
+                          gap: 2,
+                          p: 2,
+                          bgcolor: 'white',
+                          borderRadius: 1,
+                          mb: 1,
+                          border: '1px solid',
+                          borderColor: 'grey.200',
+                          alignItems: 'center'
+                        }}
+                      >
+                        <Typography variant="body2" fontWeight="medium">
+                          {customer.email}
+                        </Typography>
+                        <Typography variant="body2">
+                          {customer.contactPerson || 'N/A'}
+                        </Typography>
+                        <Typography variant="body2">
+                          {customer.companyName || 'N/A'}
+                        </Typography>
+                        <Typography variant="body2" sx={{ textAlign: 'center' }}>
+                          {customer.country || 'N/A'}
+                        </Typography>
+                        <Typography variant="body2" sx={{ textAlign: 'center' }}>
+                          {customer.enquiryCount || 0}
+                        </Typography>
+                        <Typography variant="body2" sx={{ textAlign: 'center' }}>
+                          {customer.quoteCount || 0}
+                        </Typography>
+                        <Typography variant="body2" sx={{ textAlign: 'center' }}>
+                          {new Date(customer.createdAt).toLocaleDateString()}
+                        </Typography>
+                      </Box>
+                    ))}
+                  </Box>
+                ) : (
                 <Alert severity="info" sx={{ mt: 2 }}>
-                  👥 Customers are automatically created from email enquiries.
+                    👥 No customers found. Customers are automatically created from email enquiries.
                   AI extracts contact information from email signatures and content.
                 </Alert>
+                )}
               </Box>
             )}
 
             {/* Recent Activity Tab */}
             {activeTab === 5 && (
               <Box>
-                <Typography variant="h6" gutterBottom>Recent Activity</Typography>
+                <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
+                  <Typography variant="h6">Recent Activity</Typography>
+                  <Button
+                    variant="outlined"
+                    startIcon={<RefreshIcon />}
+                    onClick={loadRecentActivity}
+                  >
+                    Refresh
+                  </Button>
+                </Box>
                 
-                {stats?.recentActivity && stats.recentActivity.length > 0 ? (
+                <Typography color="textSecondary" gutterBottom>
+                  Recent activity from the last 30 days
+                </Typography>
+                
+                {recentActivityLoading ? (
+                  <Box display="flex" justifyContent="center" p={4}>
+                    <CircularProgress />
+                  </Box>
+                ) : recentActivity && recentActivity.length > 0 ? (
                   <List>
-                    {stats.recentActivity.map((activity) => (
+                    {recentActivity.map((activity) => (
                       <React.Fragment key={activity.id}>
                         <ListItem>
                           <ListItemIcon>
@@ -1028,7 +1251,7 @@ const EmailEnquiryDashboard: React.FC = () => {
                                     color={getStatusColor(activity.status)}
                                   />
                                   <Typography variant="caption" color="textSecondary">
-                                    {activity.timestamp}
+                                    {new Date(activity.timestamp).toLocaleString()}
                                   </Typography>
                                 </Box>
                               </Box>
@@ -1161,7 +1384,7 @@ const EmailEnquiryDashboard: React.FC = () => {
                               </Typography>
                         <Typography variant="body2">
                               {item.requestedQuantity} kg
-                        </Typography>
+                              </Typography>
                             <Box sx={{ display: 'flex', justifyContent: 'center' }}>
                               <Chip 
                                 label={item.mappingConfidence} 
@@ -1219,6 +1442,178 @@ const EmailEnquiryDashboard: React.FC = () => {
             <Button onClick={confirmDeleteEnquiry} color="error" variant="contained">
               Delete
           </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Quote Details Dialog */}
+      <Dialog 
+        open={quoteDetailsDialogOpen} 
+        onClose={() => setQuoteDetailsDialogOpen(false)}
+        maxWidth="lg"
+        fullWidth
+      >
+        <DialogTitle>
+          Quote Details {selectedQuoteDetails?.quoteNumber && `- ${selectedQuoteDetails.quoteNumber}`}
+        </DialogTitle>
+        <DialogContent>
+          {quoteDetailsLoading ? (
+            <Box display="flex" justifyContent="center" p={4}>
+              <CircularProgress />
+            </Box>
+          ) : selectedQuoteDetails && (
+            <Box>
+              {/* Quote Header Info */}
+              <Grid container spacing={3} sx={{ mb: 3 }}>
+                <Grid item xs={12} sm={6}>
+                  <Typography variant="subtitle2" color="textSecondary">Quote Number</Typography>
+                  <Typography variant="body1" fontWeight="medium">{selectedQuoteDetails.quoteNumber}</Typography>
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <Typography variant="subtitle2" color="textSecondary">Status</Typography>
+                  <Chip 
+                    label={selectedQuoteDetails.status} 
+                    color={getStatusColor(selectedQuoteDetails.status)}
+                    size="small" 
+                  />
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <Typography variant="subtitle2" color="textSecondary">Customer</Typography>
+                  <Typography variant="body1">
+                    {selectedQuoteDetails.customer?.contactPerson || selectedQuoteDetails.customer?.email}
+                    </Typography>
+                  <Typography variant="caption" color="textSecondary">
+                    {selectedQuoteDetails.customer?.companyName}
+                        </Typography>
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <Typography variant="subtitle2" color="textSecondary">Total Amount</Typography>
+                  <Typography variant="h6" color="primary">
+                    {selectedQuoteDetails.currency} {selectedQuoteDetails.totalAmount?.toFixed(2)}
+                          </Typography>
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <Typography variant="subtitle2" color="textSecondary">Created</Typography>
+                  <Typography variant="body1">
+                    {new Date(selectedQuoteDetails.createdAt).toLocaleString()}
+                  </Typography>
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <Typography variant="subtitle2" color="textSecondary">Validity</Typography>
+                  <Typography variant="body1">{selectedQuoteDetails.validityPeriod}</Typography>
+                </Grid>
+              </Grid>
+
+              <Divider sx={{ my: 3 }} />
+
+              {/* Quote Items */}
+              <Typography variant="h6" gutterBottom>Quote Items</Typography>
+              {selectedQuoteDetails.items && selectedQuoteDetails.items.length > 0 ? (
+                <Box sx={{ mt: 2 }}>
+                  {selectedQuoteDetails.items.map((item: any, index: number) => (
+                    <Paper key={item.id || index} sx={{ p: 3, mb: 2, border: '1px solid', borderColor: 'grey.200' }}>
+                      <Grid container spacing={2}>
+                        {/* Item Description */}
+              <Grid item xs={12}>
+                          <Typography variant="subtitle1" fontWeight="medium" gutterBottom>
+                            {item.itemDescription || `Item ${index + 1}`}
+                </Typography>
+                        </Grid>
+
+                        {/* Specifications */}
+                        {item.specifications && (
+                          <Grid item xs={12}>
+                            <Typography variant="subtitle2" color="textSecondary" gutterBottom>
+                              Product Specifications
+                  </Typography>
+                            <Grid container spacing={2}>
+                              {item.specifications.product && (
+                                <Grid item xs={6} sm={4}>
+                                  <Typography variant="caption" color="textSecondary">Product</Typography>
+                                  <Typography variant="body2">{item.specifications.product}</Typography>
+              </Grid>
+                              )}
+                              {item.specifications.trimType && (
+                                <Grid item xs={6} sm={4}>
+                                  <Typography variant="caption" color="textSecondary">Trim Type</Typography>
+                                  <Typography variant="body2">{item.specifications.trimType}</Typography>
+                                </Grid>
+                              )}
+                              {item.specifications.rmSpec && (
+                                <Grid item xs={6} sm={4}>
+                                  <Typography variant="caption" color="textSecondary">RM Specification</Typography>
+                                  <Typography variant="body2">{item.specifications.rmSpec}</Typography>
+                                </Grid>
+                              )}
+                              {item.specifications.packagingType && (
+                                <Grid item xs={6} sm={4}>
+                                  <Typography variant="caption" color="textSecondary">Packaging</Typography>
+                                  <Typography variant="body2">{item.specifications.packagingType}</Typography>
+                                </Grid>
+                              )}
+                              {item.specifications.boxQuantity && (
+                                <Grid item xs={6} sm={4}>
+                                  <Typography variant="caption" color="textSecondary">Box Quantity</Typography>
+                                  <Typography variant="body2">{item.specifications.boxQuantity}</Typography>
+                                </Grid>
+                              )}
+                            </Grid>
+                          </Grid>
+                        )}
+
+                        {/* Pricing Information */}
+              <Grid item xs={12}>
+                          <Typography variant="subtitle2" color="textSecondary" gutterBottom>
+                            Pricing Details
+                </Typography>
+                  <Grid container spacing={2}>
+                            <Grid item xs={6} sm={3}>
+                              <Typography variant="caption" color="textSecondary">Quantity</Typography>
+                              <Typography variant="body1" fontWeight="medium">
+                                {item.quantity} kg
+                      </Typography>
+                    </Grid>
+                            <Grid item xs={6} sm={3}>
+                              <Typography variant="caption" color="textSecondary">Unit Price</Typography>
+                              <Typography variant="body1" fontWeight="medium">
+                                {item.currency} {item.unitPrice?.toFixed(2)}
+                              </Typography>
+                    </Grid>
+                            <Grid item xs={6} sm={3}>
+                              <Typography variant="caption" color="textSecondary">Cost per kg</Typography>
+                              <Typography variant="body1" fontWeight="medium" color="primary">
+                                {item.currency} {item.costPerKg?.toFixed(2)}/kg
+                          </Typography>
+                            </Grid>
+                            <Grid item xs={6} sm={3}>
+                              <Typography variant="caption" color="textSecondary">Total Cost</Typography>
+                              <Typography variant="h6" color="primary">
+                                {item.currency} {item.totalPrice?.toFixed(2)}
+                        </Typography>
+                    </Grid>
+                  </Grid>
+              </Grid>
+
+                        {/* Notes */}
+                        {item.notes && (
+                          <Grid item xs={12}>
+                            <Typography variant="subtitle2" color="textSecondary">Notes</Typography>
+                            <Typography variant="body2">{item.notes}</Typography>
+            </Grid>
+                        )}
+                      </Grid>
+                    </Paper>
+                  ))}
+                </Box>
+              ) : (
+                <Alert severity="info">
+                  No items found for this quote.
+                </Alert>
+              )}
+            </Box>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setQuoteDetailsDialogOpen(false)}>Close</Button>
         </DialogActions>
       </Dialog>
 

@@ -137,6 +137,71 @@ public class EmailEnquiryController {
     }
 
     /**
+     * Get all customers
+     */
+    @GetMapping("/customers")
+    public ResponseEntity<List<Map<String, Object>>> getAllCustomers() {
+        List<Customer> customers = customerRepository.findAll();
+        
+        List<Map<String, Object>> customerDtos = customers.stream()
+            .map(this::convertCustomerToDto)
+            .collect(Collectors.toList());
+        
+        return ResponseEntity.ok(customerDtos);
+    }
+    
+    private Map<String, Object> convertCustomerToDto(Customer customer) {
+        Map<String, Object> dto = new HashMap<>();
+        dto.put("id", customer.getId());
+        dto.put("email", customer.getEmail());
+        dto.put("companyName", customer.getCompanyName());
+        dto.put("contactPerson", customer.getContactPerson());
+        dto.put("phone", customer.getPhone());
+        dto.put("address", customer.getAddress());
+        dto.put("country", customer.getCountry());
+        dto.put("createdAt", customer.getCreatedAt());
+        dto.put("updatedAt", customer.getUpdatedAt());
+        
+        // Add counts without loading full collections to avoid performance issues
+        long enquiryCount = emailEnquiryRepository.countByCustomer(customer);
+        dto.put("enquiryCount", enquiryCount);
+        dto.put("quoteCount", 0L); // TODO: Add quote count when quote repository is available
+        dto.put("orderCount", 0L); // TODO: Add order count when order repository is available
+        
+        return dto;
+    }
+    
+    /**
+     * Get recent activity (last 30 days)
+     */
+    @GetMapping("/recent-activity")
+    public ResponseEntity<List<Map<String, Object>>> getRecentActivity() {
+        LocalDateTime thirtyDaysAgo = LocalDateTime.now().minusDays(30);
+        
+        List<Map<String, Object>> activities = new ArrayList<>();
+        
+        // Get recent enquiries
+        List<EmailEnquiry> recentEnquiries = emailEnquiryRepository
+            .findRecentEnquiries(thirtyDaysAgo)
+            .stream()
+            .limit(20)
+            .collect(Collectors.toList());
+        
+        for (EmailEnquiry enquiry : recentEnquiries) {
+            Map<String, Object> activity = new HashMap<>();
+            activity.put("id", "ENQ-" + enquiry.getId());
+            activity.put("type", "ENQUIRY");
+            activity.put("title", "New Enquiry: " + enquiry.getEnquiryId());
+            activity.put("description", "From: " + enquiry.getFromEmail() + " - " + enquiry.getSubject());
+            activity.put("status", enquiry.getStatus().toString());
+            activity.put("timestamp", enquiry.getReceivedAt().toString());
+            activities.add(activity);
+        }
+        
+        return ResponseEntity.ok(activities);
+    }
+    
+    /**
      * Get dashboard statistics
      */
     @GetMapping("/dashboard/stats")

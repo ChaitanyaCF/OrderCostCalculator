@@ -2,6 +2,7 @@ package com.procost.api.repository;
 
 import com.procost.api.model.EmailEnquiry;
 import com.procost.api.model.EnquiryStatus;
+import com.procost.api.model.Customer;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -38,6 +39,9 @@ public interface EmailEnquiryRepository extends JpaRepository<EmailEnquiry, Long
     
     // Count by status
     long countByStatus(EnquiryStatus status);
+    
+    // Count by customer
+    long countByCustomer(Customer customer);
     
     // Find unprocessed enquiries
     List<EmailEnquiry> findByAiProcessedFalseOrderByReceivedAtAsc();

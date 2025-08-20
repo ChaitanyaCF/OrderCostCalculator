@@ -54,10 +54,41 @@ public class QuoteService {
             
             quote.setTotalAmount(totalAmount);
             
-            // Save the quote to database
+            // Save the quote to database first
             Quote savedQuote = quoteRepository.save(quote);
             logger.info("Quote {} saved successfully with total amount: {} {}", 
                 savedQuote.getQuoteNumber(), savedQuote.getTotalAmount(), savedQuote.getCurrency());
+            
+            // Create quote items from enquiry items
+            for (EnquiryItem enquiryItem : emailEnquiry.getEnquiryItems()) {
+                QuoteItem quoteItem = new QuoteItem();
+                quoteItem.setQuote(savedQuote);
+                quoteItem.setEnquiryItem(enquiryItem);
+                quoteItem.setItemDescription(enquiryItem.getProductDescription());
+                quoteItem.setQuantity(enquiryItem.getRequestedQuantity());
+                
+                // Calculate pricing
+                double quantity = enquiryItem.getRequestedQuantity() != null ? enquiryItem.getRequestedQuantity() : 0;
+                double unitPrice = 5.0; // Default rate per kg (DKK) - this should be calculated from rate tables
+                double totalPrice = quantity * unitPrice;
+                
+                quoteItem.setUnitPrice(unitPrice);
+                quoteItem.setTotalPrice(totalPrice);
+                quoteItem.setCurrency("DKK");
+                
+                // Add notes if available
+                if (enquiryItem.getSpecialInstructions() != null) {
+                    quoteItem.setNotes(enquiryItem.getSpecialInstructions());
+                }
+                
+                // Add to quote's items list
+                savedQuote.getQuoteItems().add(quoteItem);
+            }
+            
+            // Save the quote again to persist the quote items
+            savedQuote = quoteRepository.save(savedQuote);
+            logger.info("Created {} quote items for quote {}", 
+                savedQuote.getQuoteItems().size(), savedQuote.getQuoteNumber());
             
             // Update enquiry status to QUOTED
             emailEnquiry.setStatus(EnquiryStatus.QUOTED);
