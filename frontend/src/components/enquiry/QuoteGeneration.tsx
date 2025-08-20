@@ -167,14 +167,16 @@ const QuoteGeneration: React.FC<QuoteGenerationProps> = () => {
           // Form fields - initialize with smart defaults based on AI-parsed data
           productType: item.productType === 'FROZEN' ? 'Frozen' : (item.productType === 'FRESH' ? 'Fresh' : ''),
           product: item.product === 'UNKNOWN' ? '' : (item.product || ''),
-          trimType: item.trimType === 'UNKNOWN' ? '' : (item.trimType || ''),
-          rmSpec: item.rmSpec === 'UNKNOWN' ? '' : (item.rmSpec || ''),
+          trimType: (item.trimType && item.trimType !== 'UNKNOWN' && item.trimType !== 'N/A') ? 
+            (item.trimType.length === 1 ? `Trim ${item.trimType}` : item.trimType) : '',
+          rmSpec: (item.rmSpec && item.rmSpec !== 'UNKNOWN' && item.rmSpec !== 'N/A') ? 
+            item.rmSpec.replace(/(\d+)-(\d+)kg/, '$1-$2 kg') : '',
             yieldValue: 0,
           freezingType: 'Tunnel Freezing', // Default for frozen products
           isStorageRequired: false,
           numberOfWeeks: 1.0,
-          boxQty: item.boxQuantity || '',
-          packagingType: item.packagingType === 'UNKNOWN' ? '' : (item.packagingType || ''),
+          boxQty: (item.boxQuantity && item.boxQuantity !== 'Not specified' && item.boxQuantity !== 'N/A') ? item.boxQuantity : '',
+          packagingType: (item.packagingType && item.packagingType !== 'UNKNOWN' && item.packagingType !== 'N/A') ? item.packagingType : '',
           transportMode: item.transportMode === 'UNKNOWN' ? '' : (item.transportMode || ''),
           quantity: item.requestedQuantity || 0,
           
@@ -277,6 +279,51 @@ const QuoteGeneration: React.FC<QuoteGenerationProps> = () => {
       setTrimTypes(uniqueTrimTypes);
     }
   }, [selectedFactory]);
+
+  // Load trim types for each SKU when product changes (like NewEnquiry)
+  useEffect(() => {
+    skuForms.forEach((skuForm, index) => {
+      if (skuForm.product && selectedFactory?.rateData) {
+        const factoryTrimTypes = selectedFactory.rateData
+          .filter(item => item.product === skuForm.product && item.trim_type)
+          .map(item => item.trim_type);
+        
+        const uniqueTrimTypes = Array.from(new Set(factoryTrimTypes.filter(Boolean))).sort();
+        setTrimTypes(uniqueTrimTypes);
+      }
+    });
+  }, [skuForms.map(s => s.product).join(','), selectedFactory]);
+
+  // Load RM specs for each SKU when product and trim type change (like NewEnquiry)
+  useEffect(() => {
+    skuForms.forEach((skuForm, index) => {
+      if (skuForm.product && skuForm.trimType && selectedFactory?.rateData) {
+        const factoryRmSpecs = selectedFactory.rateData
+          .filter(item => 
+            item.product === skuForm.product && 
+            item.trim_type === skuForm.trimType && 
+            item.rm_spec
+          )
+          .map(item => item.rm_spec);
+        
+        const uniqueRmSpecs = Array.from(new Set(factoryRmSpecs.filter(Boolean))).sort();
+        setRmSpecs(uniqueRmSpecs);
+        
+        // If this is initial load and we have a pre-filled rmSpec, make sure it's valid
+        if (skuForm.rmSpec && !uniqueRmSpecs.includes(skuForm.rmSpec)) {
+          console.log(`Pre-filled rmSpec "${skuForm.rmSpec}" not found in available options:`, uniqueRmSpecs);
+          // Try to find a close match
+          const closeMatch = uniqueRmSpecs.find(spec => spec.includes(skuForm.rmSpec.replace(' kg', 'kg')));
+          if (closeMatch) {
+            console.log(`Found close match: ${closeMatch}`);
+            setSkuForms(prev => prev.map(form => 
+              form.id === skuForm.id ? { ...form, rmSpec: closeMatch } : form
+            ));
+          }
+        }
+      }
+    });
+  }, [skuForms.map(s => s.product + '|' + s.trimType).join(','), selectedFactory]);
 
   // Load RM specs from rate data
   useEffect(() => {
@@ -459,6 +506,24 @@ const QuoteGeneration: React.FC<QuoteGenerationProps> = () => {
     setSkuForms(prev => prev.map(form => {
       if (form.id === skuId) {
         const updatedForm = { ...form, [field]: value };
+        
+        // When trim type changes, load RM specs and reset rmSpec
+        if (field === 'trimType' && updatedForm.product && updatedForm.trimType && selectedFactory?.rateData) {
+          const factoryRmSpecs = selectedFactory.rateData
+            .filter(item => 
+              item.product === updatedForm.product && 
+              item.trim_type === updatedForm.trimType && 
+              item.rm_spec
+            )
+            .map(item => item.rm_spec);
+          
+          const uniqueRmSpecs = Array.from(new Set(factoryRmSpecs.filter(Boolean))).sort();
+          setRmSpecs(uniqueRmSpecs);
+          
+          // Reset rmSpec when trim type changes
+          updatedForm.rmSpec = '';
+          updatedForm.filletingRate = 0;
+        }
         
         // Update filleting rate when product/trim/rm spec changes
         if ((field === 'product' || field === 'trimType' || field === 'rmSpec') && 
@@ -884,7 +949,7 @@ const QuoteGeneration: React.FC<QuoteGenerationProps> = () => {
                     </Typography>
                     <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
                       <Chip 
-                        label={`${skuForm.requestedQuantity.toLocaleString()} tons`}
+                        label={`${skuForm.requestedQuantity.toLocaleString()} kg`}
                         color="primary"
                         size="small"
                       />
@@ -938,7 +1003,7 @@ const QuoteGeneration: React.FC<QuoteGenerationProps> = () => {
                         <Grid item xs={12} sm={6}>
                           <TextField
                             fullWidth
-                            label="Quantity (tons)"
+                            label="Quantity (kg)"
                             type="number"
                             value={skuForm.quantity}
                             onChange={(e) => handleSKUFormChange(skuForm.id, 'quantity', parseFloat(e.target.value) || 0)}

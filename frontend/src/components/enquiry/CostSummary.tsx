@@ -358,7 +358,7 @@ export const CostSummary: React.FC<CostSummaryProps> = ({
                 </Box>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
                   <Typography>Storage Charge ({Math.ceil(numberOfWeeks)} {Math.ceil(numberOfWeeks) === 1 ? 'week' : 'weeks'})</Typography>
-                  <Typography>{getCurrencySymbol()}{(Math.ceil(numberOfWeeks) * selectedFactory.storageRate).toFixed(2)}</Typography>
+                  <Typography>{getCurrencySymbol()}{(quantity * Math.ceil(numberOfWeeks) * selectedFactory.storageRate).toFixed(2)}</Typography>
                 </Box>
               </>
             )}
@@ -370,6 +370,13 @@ export const CostSummary: React.FC<CostSummaryProps> = ({
         <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
           <Typography>Quantity:</Typography>
           <Typography>{quantity} kg</Typography>
+        </Box>
+        
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+          <Typography sx={{ fontWeight: 'medium' }}>Cost per kg:</Typography>
+          <Typography sx={{ fontWeight: 'medium' }}>
+            {getCurrencySymbol()}{quantity > 0 ? (Number(totalCharges || 0) / quantity).toFixed(2) : '0.00'}/kg
+          </Typography>
         </Box>
         
         <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
