@@ -56,6 +56,9 @@ public class EmailEnquiry {
     @CreationTimestamp
     private LocalDateTime receivedAt;
     
+    @CreationTimestamp
+    private LocalDateTime createdAt;
+    
     // Constructors
     public EmailEnquiry() {}
     
@@ -168,5 +171,21 @@ public class EmailEnquiry {
     
     public void setReceivedAt(LocalDateTime receivedAt) {
         this.receivedAt = receivedAt;
+    }
+    
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
+    
+    public void setCreatedAt(LocalDateTime createdAt) {
+        this.createdAt = createdAt;
+    }
+    
+    public boolean isAiProcessed() {
+        return aiProcessed != null ? aiProcessed : false;
+    }
+    
+    public void setAiProcessed(boolean aiProcessed) {
+        this.aiProcessed = aiProcessed;
     }
 } 

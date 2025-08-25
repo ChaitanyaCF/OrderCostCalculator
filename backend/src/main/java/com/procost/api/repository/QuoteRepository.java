@@ -8,6 +8,9 @@ import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 @Repository
 public interface QuoteRepository extends JpaRepository<Quote, Long> {
@@ -20,4 +23,8 @@ public interface QuoteRepository extends JpaRepository<Quote, Long> {
     List<Quote> findRecentQuotes(LocalDateTime since);
     
     long countByStatus(QuoteStatus status);
+    
+    // Additional methods for external API
+    Optional<Quote> findByQuoteNumber(String quoteNumber);
+    Page<Quote> findByCreatedAtAfter(LocalDateTime since, Pageable pageable);
 } 

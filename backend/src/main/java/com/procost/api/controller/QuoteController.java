@@ -41,8 +41,10 @@ public class QuoteController {
         
         try {
             String enquiryId = (String) requestData.get("enquiryId");
+            @SuppressWarnings("unchecked")
+            List<Map<String, Object>> skuForms = (List<Map<String, Object>>) requestData.get("skuForms");
             
-            Quote quote = quoteService.generateQuoteForEnquiry(enquiryId);
+            Quote quote = quoteService.generateQuoteForEnquiry(enquiryId, skuForms);
             
             Map<String, Object> response = new HashMap<>();
             response.put("success", true);
@@ -85,7 +87,7 @@ public class QuoteController {
         logger.info("Generating quote for enquiry: {}", enquiryId);
         
         try {
-            Quote quote = quoteService.generateQuoteForEnquiry(enquiryId);
+            Quote quote = quoteService.generateQuoteForEnquiry(enquiryId, null);
             
             Map<String, Object> response = new HashMap<>();
             response.put("success", true);

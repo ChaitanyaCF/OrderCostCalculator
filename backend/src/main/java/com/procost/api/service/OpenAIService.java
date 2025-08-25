@@ -554,4 +554,104 @@ public class OpenAIService {
             return emailBody;
         }
     }
+    
+    /**
+     * Generate field mapping suggestions using AI
+     */
+    public String generateFieldMappingSuggestions(String prompt) {
+        logger.info("🤖 Generating field mapping suggestions using OpenAI");
+        
+        if (openaiApiKey == null || openaiApiKey.isEmpty()) {
+            logger.warn("❌ OpenAI API key not configured for field mapping");
+            throw new RuntimeException("OpenAI API key not configured");
+        }
+        
+        try {
+            OpenAiService service = new OpenAiService(openaiApiKey, Duration.ofMillis(requestTimeout));
+            
+            ChatCompletionRequest chatRequest = ChatCompletionRequest.builder()
+                    .model(openaiModel)
+                    .messages(Arrays.asList(
+                            new ChatMessage(ChatMessageRole.SYSTEM.value(), 
+                                "You are an expert in API integration and field mapping. " +
+                                "Analyze field structures and suggest intelligent mappings between external APIs and internal systems. " +
+                                "Consider semantic similarity, data types, business logic, and common naming conventions. " +
+                                "Always respond with valid JSON format."),
+                            new ChatMessage(ChatMessageRole.USER.value(), prompt)
+                    ))
+                    .maxTokens(2000)
+                    .temperature(0.1)
+                    .build();
+            
+            ChatCompletionResult result = service.createChatCompletion(chatRequest);
+            String response = result.getChoices().get(0).getMessage().getContent().trim();
+            
+            logger.info("✅ Generated field mapping suggestions (length: {})", response.length());
+            return response;
+            
+        } catch (Exception e) {
+            logger.error("❌ Field mapping suggestion generation failed", e);
+            throw new RuntimeException("Failed to generate field mapping suggestions: " + e.getMessage(), e);
+        }
+    }
+    
+    /**
+     * Generate data transformation suggestions using AI
+     */
+    public String generateTransformationSuggestions(String sourceValue, String targetType, String context) {
+        logger.info("🤖 Generating transformation suggestions for: {} -> {}", sourceValue, targetType);
+        
+        if (openaiApiKey == null || openaiApiKey.isEmpty()) {
+            logger.warn("❌ OpenAI API key not configured for transformation suggestions");
+            throw new RuntimeException("OpenAI API key not configured");
+        }
+        
+        try {
+            String prompt = String.format(
+                "You are a data transformation expert. Given the following:\n" +
+                "- Source Value: %s\n" +
+                "- Target Type: %s\n" +
+                "- Context: %s\n\n" +
+                "Suggest a JavaScript-like transformation rule to convert the source value to the target type.\n" +
+                "Consider common business data transformations like:\n" +
+                "- Date format conversions\n" +
+                "- Unit conversions (kg to tons, etc.)\n" +
+                "- String formatting and cleaning\n" +
+                "- Enum value mapping\n" +
+                "- Currency conversions\n" +
+                "- Phone number formatting\n\n" +
+                "Respond with JSON format:\n" +
+                "{\n" +
+                "  \"transformation\": \"JavaScript expression\",\n" +
+                "  \"explanation\": \"Brief explanation of the transformation\",\n" +
+                "  \"examples\": [\"input -> output examples\"]\n" +
+                "}",
+                sourceValue, targetType, context
+            );
+            
+            OpenAiService service = new OpenAiService(openaiApiKey, Duration.ofMillis(requestTimeout));
+            
+            ChatCompletionRequest chatRequest = ChatCompletionRequest.builder()
+                    .model(openaiModel)
+                    .messages(Arrays.asList(
+                            new ChatMessage(ChatMessageRole.SYSTEM.value(), 
+                                "You are a data transformation expert specializing in business data conversions. " +
+                                "Generate practical, safe JavaScript-like transformation rules."),
+                            new ChatMessage(ChatMessageRole.USER.value(), prompt)
+                    ))
+                    .maxTokens(500)
+                    .temperature(0.1)
+                    .build();
+            
+            ChatCompletionResult result = service.createChatCompletion(chatRequest);
+            String response = result.getChoices().get(0).getMessage().getContent().trim();
+            
+            logger.info("✅ Generated transformation suggestion");
+            return response;
+            
+        } catch (Exception e) {
+            logger.error("❌ Transformation suggestion generation failed", e);
+            throw new RuntimeException("Failed to generate transformation suggestions: " + e.getMessage(), e);
+        }
+    }
 }

@@ -21,7 +21,7 @@ public class OrderItem {
     @Column(columnDefinition = "TEXT")
     private String itemDescription;
     
-    private Integer quantity;
+    private Double quantity;
     private Double unitPrice;
     private Double totalPrice;
     
@@ -41,7 +41,7 @@ public class OrderItem {
         this.order = order;
         this.quoteItem = quoteItem;
         this.itemDescription = quoteItem.getItemDescription();
-        this.quantity = quoteItem.getQuantity();
+        this.quantity = quoteItem.getQuantity().doubleValue();
         this.unitPrice = quoteItem.getUnitPrice();
         this.totalPrice = quoteItem.getTotalPrice();
         this.currency = quoteItem.getCurrency();
@@ -80,11 +80,11 @@ public class OrderItem {
         this.itemDescription = itemDescription;
     }
     
-    public Integer getQuantity() {
+    public Double getQuantity() {
         return quantity;
     }
     
-    public void setQuantity(Integer quantity) {
+    public void setQuantity(Double quantity) {
         this.quantity = quantity;
         updateTotalPrice();
     }

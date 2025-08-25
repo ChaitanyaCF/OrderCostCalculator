@@ -117,7 +117,7 @@ public class ZapierWebhookController {
         try {
             logger.info("Generating quote for enquiry: {}", enquiryId);
             
-            Quote quote = quoteService.generateQuoteForEnquiry(enquiryId);
+            Quote quote = quoteService.generateQuoteForEnquiry(enquiryId, null);
             
             // Return quote data for Zapier to email
             Map<String, Object> response = new HashMap<>();

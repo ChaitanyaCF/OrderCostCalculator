@@ -29,6 +29,9 @@ public class Order {
     @Enumerated(EnumType.STRING)
     private OrderStatus status = OrderStatus.CONFIRMED; // CONFIRMED, IN_PRODUCTION, SHIPPED, DELIVERED, CANCELLED
     
+    @Enumerated(EnumType.STRING)
+    private PaymentStatus paymentStatus = PaymentStatus.PENDING;
+    
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<OrderItem> orderItems = new ArrayList<>();
     
@@ -40,9 +43,11 @@ public class Order {
     @CreationTimestamp
     private LocalDateTime createdAt;
     
+    private LocalDateTime orderDate;
     private LocalDateTime confirmedAt;
     private LocalDateTime expectedDelivery;
     private LocalDateTime deliveredAt;
+    private LocalDateTime deliveryDate;
     
     @Column(columnDefinition = "TEXT")
     private String shippingAddress;
@@ -173,5 +178,37 @@ public class Order {
     
     public void setSpecialInstructions(String specialInstructions) {
         this.specialInstructions = specialInstructions;
+    }
+    
+    public PaymentStatus getPaymentStatus() {
+        return paymentStatus;
+    }
+    
+    public void setPaymentStatus(PaymentStatus paymentStatus) {
+        this.paymentStatus = paymentStatus;
+    }
+    
+    public LocalDateTime getOrderDate() {
+        return orderDate;
+    }
+    
+    public void setOrderDate(LocalDateTime orderDate) {
+        this.orderDate = orderDate;
+    }
+    
+    public LocalDateTime getDeliveryDate() {
+        return deliveryDate;
+    }
+    
+    public void setDeliveryDate(LocalDateTime deliveryDate) {
+        this.deliveryDate = deliveryDate;
+    }
+    
+    public OrderStatus getOrderStatus() {
+        return status;
+    }
+    
+    public void setOrderStatus(OrderStatus status) {
+        this.status = status;
     }
 } 

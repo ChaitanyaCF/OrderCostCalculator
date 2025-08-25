@@ -6,6 +6,7 @@ import com.procost.api.repository.EmailEnquiryRepository;
 import com.procost.api.repository.EmailRepository;
 import com.procost.api.service.EmailContentProcessor;
 import com.procost.api.service.HybridEmailProcessor;
+import com.procost.api.service.IntegrationService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -44,6 +45,9 @@ public class ZapierDataController {
     
     @Autowired
     private HybridEmailProcessor hybridEmailProcessor;
+    
+    @Autowired
+    private IntegrationService integrationService;
     
     /**
      * Enhanced email reception with thread tracking and database storage
@@ -443,7 +447,18 @@ public class ZapierDataController {
             item.setEmailEnquiry(enquiry);
         }
         
-        return emailEnquiryRepository.save(enquiry);
+        EmailEnquiry savedEnquiry = emailEnquiryRepository.save(enquiry);
+        
+        // Trigger integration webhooks for enquiry creation
+        try {
+            integrationService.pushDataToIntegrations("ENQUIRY", savedEnquiry, savedEnquiry.getId());
+            logger.info("Enquiry integration webhooks triggered successfully for enquiry: {}", savedEnquiry.getEnquiryId());
+        } catch (Exception e) {
+            logger.warn("Failed to trigger integration webhooks for enquiry: {} - {}", savedEnquiry.getEnquiryId(), e.getMessage());
+            // Don't fail the enquiry creation if webhook fails
+        }
+        
+        return savedEnquiry;
     }
     
     /**
@@ -516,6 +531,15 @@ public class ZapierDataController {
         logger.info("   Final Status: {}", savedEnquiry.getStatus());
         logger.info("   Items Count: {}", savedEnquiry.getEnquiryItems().size());
         logger.info("🔥 ===== END PROGRESSION UPDATE =====");
+        
+        // Trigger integration webhooks for enquiry creation/update
+        try {
+            integrationService.pushDataToIntegrations("ENQUIRY", savedEnquiry, savedEnquiry.getId());
+            logger.info("Enquiry integration webhooks triggered successfully for enquiry: {}", savedEnquiry.getEnquiryId());
+        } catch (Exception e) {
+            logger.warn("Failed to trigger integration webhooks for enquiry: {} - {}", savedEnquiry.getEnquiryId(), e.getMessage());
+            // Don't fail the enquiry creation if webhook fails
+        }
         
         return savedEnquiry;
     }

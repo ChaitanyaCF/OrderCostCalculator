@@ -191,20 +191,20 @@ const QuoteGeneration: React.FC<QuoteGenerationProps> = () => {
           dispatchFee: 0,
           environmentalFee: 0,
           electricityFee: 0,
-          
+            
           optionalCharges: [] as Array<{chargeValue: number}>,
           
           // Individual toggle states for each SKU (default values)
-          palletChargeEnabled: true,
-          terminalChargeEnabled: true,
-          receptionFeeEnabled: false,
-          dispatchFeeEnabled: false,
-          environmentalFeeEnabled: false,
-          electricityFeeEnabled: false,
-          prodABEnabled: false,
-          descalingEnabled: false,
-          portionSkinOnEnabled: false,
-          portionSkinOffEnabled: false
+            palletChargeEnabled: true,
+            terminalChargeEnabled: true,
+            receptionFeeEnabled: false,
+            dispatchFeeEnabled: false,
+            environmentalFeeEnabled: false,
+            electricityFeeEnabled: false,
+            prodABEnabled: false,
+            descalingEnabled: false,
+            portionSkinOnEnabled: false,
+            portionSkinOffEnabled: false
         }));
 
         setSkuForms(initialForms);

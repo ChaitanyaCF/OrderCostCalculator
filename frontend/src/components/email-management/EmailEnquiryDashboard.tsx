@@ -43,12 +43,14 @@ import {
   Refresh as RefreshIcon,
   Delete as DeleteIcon,
   Visibility as VisibilityIcon,
+  Hub as IntegrationIcon,
 } from '@mui/icons-material';
 import { useAuth } from '../../context/AuthContext';
 import Header from '../layout/Header';
 import EmailService, { Email, EmailStats } from '../../services/EmailService';
 import EmailEnquiryService, { EnquiryItem } from '../../services/EmailEnquiryService';
 import AuthService from '../../services/AuthService';
+import IntegrationDashboard from '../integration/IntegrationDashboard';
 import { API_BASE_URL } from '../../config';
 
 // Types for email-driven workflow
@@ -606,6 +608,16 @@ const EmailEnquiryDashboard: React.FC = () => {
               />
               <Tab label="Customers" />
               <Tab label="Recent Activity" />
+              {user?.isAdmin && (
+                <Tab 
+                  label={
+                    <Box display="flex" alignItems="center" gap={1}>
+                      <IntegrationIcon fontSize="small" />
+                      Integrations
+                    </Box>
+                  } 
+                />
+              )}
             </Tabs>
           </Box>
 
@@ -1267,6 +1279,13 @@ const EmailEnquiryDashboard: React.FC = () => {
                     No recent activity available. Activity will appear here when emails are processed, quotes are generated, or orders are placed.
                   </Alert>
                 )}
+              </Box>
+            )}
+
+            {/* Integration Management Tab - Admin Only */}
+            {user?.isAdmin && activeTab === 6 && (
+              <Box>
+                <IntegrationDashboard />
               </Box>
             )}
           </Box>
