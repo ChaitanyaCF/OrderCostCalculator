@@ -5,9 +5,6 @@ import {
   Container, 
   Paper, 
   Button, 
-  AppBar, 
-  Toolbar, 
-  IconButton,
   Table,
   TableBody,
   TableCell,
@@ -26,13 +23,12 @@ import {
   Snackbar,
   Chip
 } from '@mui/material';
-import LogoutIcon from '@mui/icons-material/Logout';
-import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import AddIcon from '@mui/icons-material/Add';
 import DeleteIcon from '@mui/icons-material/Delete';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import UserService from '../../services/UserService';
+import Header from '../layout/Header';
 
 interface User {
   id: number;
@@ -43,7 +39,7 @@ interface User {
 }
 
 const UserManagement: React.FC = () => {
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
   const navigate = useNavigate();
   
   // State variables
@@ -154,54 +150,20 @@ const UserManagement: React.FC = () => {
     }
   };
   
-  const handleLogout = () => {
-    logout();
-    navigate('/');
-  };
-
   const handleBack = () => {
     navigate('/dashboard');
   };
   
   return (
     <Box sx={{ flexGrow: 1, minHeight: '100vh', bgcolor: '#f5f5f5' }}>
-      <AppBar position="static" sx={{ bgcolor: 'primary.main' }}>
-        <Toolbar>
-          <Box className="header-logo">
-            <Box 
-              component="img" 
-              src="/images/cft-logo.png"
-              alt="ProCost Logo"
-              sx={{ height: '40px' }}
-            />
-          </Box>
-          <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
-            ProCost Enquiry Calculator
-          </Typography>
-          <Box sx={{ display: 'flex', alignItems: 'center' }}>
-            <Typography variant="body1" sx={{ mr: 2 }}>
-              Hello, {user?.username || 'User'}
-            </Typography>
-            <IconButton color="inherit" onClick={handleLogout} title="Logout">
-              <LogoutIcon />
-            </IconButton>
-          </Box>
-        </Toolbar>
-      </AppBar>
+      <Header 
+        title="User Management" 
+        showBackButton={true}
+        backPath="/dashboard"
+        onBack={handleBack}
+      />
 
       <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', mb: 4 }}>
-          <Button 
-            startIcon={<ArrowBackIcon />} 
-            onClick={handleBack}
-            sx={{ mr: 2 }}
-          >
-            Back to Dashboard
-          </Button>
-          <Typography variant="h4" component="h1" color="primary">
-            User Management
-          </Typography>
-        </Box>
         
         <Snackbar 
           open={!!successMessage} 
